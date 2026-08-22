@@ -1,25 +1,25 @@
 // non-threaded
-SqlConnect()
+void SqlConnect()
 {
-    if ( g_DbConnection != INVALID_HANDLE )
+    if ( g_DbConnection != null )
     {
         return;
     }
-    
-    decl String:error[256];
+
+    char error[256];
     if ( SQL_CheckConfig("gungame") ) {
         g_DbConnection = SQL_Connect("gungame", false, error, sizeof(error));
     } else {
         g_DbConnection = SQL_Connect("storage-local", false, error, sizeof(error));
     }
-    
-    if ( g_DbConnection == INVALID_HANDLE )
+
+    if ( g_DbConnection == null )
     {
         SetFailState("Unable to connect to database (%s)", error);
         return;
     }
-    
-    new String:ident[16];
+
+    char ident[16];
     SQL_ReadDriver(g_DbConnection, ident, sizeof(ident));
     if ( strcmp(ident, "sqlite") == 0 ) {
         g_DbType = DbTypeSqlite;
@@ -28,30 +28,30 @@ SqlConnect()
     } else if ( strcmp(ident, "pgsql") == 0 ) {
         g_DbType = DbTypePgsql;
     } else {
-        CloseHandle(g_DbConnection);
-        g_DbConnection = INVALID_HANDLE;
+        delete g_DbConnection;
+        g_DbConnection = null;
         SetFailState("Unknown db type (%s)", ident);
         return;
     }
-    
+
     SQL_LockDatabase(g_DbConnection);
-    
-    new bool:tableExists = false;
+
+    bool tableExists = false;
     #if defined SQL_DEBUG
         LogError("[DEBUG-SQL] %s", g_sql_checkTableExists[g_DbType]);
     #endif
-    new Handle:result = SQL_Query(g_DbConnection, g_sql_checkTableExists[g_DbType]);
-    if ( result == INVALID_HANDLE )
+    DBResultSet result = SQL_Query(g_DbConnection, g_sql_checkTableExists[g_DbType]);
+    if ( result == null )
     {
         SQL_GetError(g_DbConnection, error, sizeof(error));
         LogError("Failed to check table exists (error: %s)", error);
         SQL_UnlockDatabase(g_DbConnection);
         return;
     } else {
-        tableExists = bool:SQL_GetRowCount(result);
-        CloseHandle(result);
+        tableExists = view_as<bool>(result.RowCount);
+        delete result;
     }
-    
+
     if ( !tableExists )
     {
         #if defined SQL_DEBUG
@@ -95,35 +95,44 @@ SqlConnect()
 }
 
 // threaded
-SavePlayerData(client)
+void SavePlayerData(int client)
 {
-    new wins = PlayerWinsData[client];
+    int wins = PlayerWinsData[client];
     if ( !wins )
     {
         return;
     }
-    
-    decl String:auth[64], String:name[MAX_NAME_SIZE];
-    GetClientAuthString(client, auth, sizeof(auth));
+
+    char auth[64], name[MAX_NAME_SIZE];
+    GetClientAuthId(client, AuthId_Steam2, auth, sizeof(auth));
+
+    /* Normalize STEAM_1:... back to legacy STEAM_0:... used as database keys */
+    if ( strncmp(auth, "STEAM_1:", 8) == 0 ) {
+        auth[6] = '0';
+    }
+
     GetClientName(client, name, sizeof(name));
 
-    new bufferLen = sizeof(name) * 2 + 1;
-    decl String:nameQuoted[bufferLen];
- 
-    SQL_EscapeString(g_DbConnection, name, nameQuoted, bufferLen);
-        
-    decl String:query[1024];
-    Format(query, sizeof(query), wins == 1 ? g_sql_insertPlayer : g_sql_updatePlayerByAuth, wins, nameQuoted, auth);
+    char nameQuoted[sizeof(name) * 2 + 1];
+
+    g_DbConnection.Escape(name, nameQuoted, sizeof(nameQuoted));
+
+    char query[1024];
+    if ( wins == 1 ) {
+        Format(query, sizeof(query), g_sql_insertPlayer, wins, nameQuoted, auth);
+    } else {
+        Format(query, sizeof(query), g_sql_updatePlayerByAuth, wins, nameQuoted, auth);
+    }
     #if defined SQL_DEBUG
         LogError("[DEBUG-SQL] %s", query);
     #endif
-    SQL_TQuery(g_DbConnection, T_SavePlayerData, query);
+    g_DbConnection.Query(T_SavePlayerData, query);
 }
 
 // threaded
-public T_SavePlayerData(Handle:owner, Handle:result, const String:error[], any:data)
+public void T_SavePlayerData(Database owner, DBResultSet result, const char[] error, any data)
 {
-    if ( result == INVALID_HANDLE )
+    if ( result == null )
     {
         LogError("Failed to save player data (error: %s)", error);
         return;
@@ -134,7 +143,7 @@ public T_SavePlayerData(Handle:owner, Handle:result, const String:error[], any:d
 }
 
 // non-threaded
-GetPlayerPlaceInStat(client)
+int GetPlayerPlaceInStat(int client)
 {
     // get from cache
     if ( !PlayerWinsData[client] || PlayerPlaceData[client] )
@@ -147,88 +156,88 @@ GetPlayerPlaceInStat(client)
 }
 
 // non-threaded
-GetPlayerPlace(client)
+int GetPlayerPlace(int client)
 {
-    decl String:query[1024];
+    char query[1024];
     Format(query, sizeof(query), g_sql_getPlayerPlaceByWins, PlayerWinsData[client]);
     SQL_LockDatabase(g_DbConnection);
     #if defined SQL_DEBUG
         LogError("[DEBUG-SQL] %s", query);
     #endif
-    new Handle:result = SQL_Query(g_DbConnection, query);
-    if ( result == INVALID_HANDLE )
+    DBResultSet result = SQL_Query(g_DbConnection, query);
+    if ( result == null )
     {
-        new String:error[255];
+        char error[255];
         SQL_GetError(g_DbConnection, error, sizeof(error));
         LogError("Failed get player place in stats (error: %s)", error);
         SQL_UnlockDatabase(g_DbConnection);
         return 0;
     }
     SQL_UnlockDatabase(g_DbConnection);
-    new place;
-    if ( SQL_FetchRow(result) )
+    int place;
+    if ( result.FetchRow() )
     {
-        place = SQL_FetchInt(result, 0) + 1;
+        place = result.FetchInt(0) + 1;
     }
-    CloseHandle(result);
+    delete result;
     return place;
 }
 
-CountPlayersInStat()
+int CountPlayersInStat()
 {
     return TotalWinners;
 }
 
 // threaded
-RetrieveKeyValues(client, const String:auth[])
+void RetrieveKeyValues(int client, const char[] auth)
 {
     if ( auth[0] == 'B' )
     {
         g_PlayerWinsLoaded[client] = true;
         PlayerWinsData[client] = 0;
-        
+
         #if defined SQL_DEBUG
             LogError("[DEBUG-SQL] FORWARD PLAYER WINS LOADED client=%i is BOT", client);
         #endif
-        
+
         Call_StartForward(FwdLoadPlayerWins);
         Call_PushCell(client);
         Call_Finish();
         return;
     }
-    decl String:query[1024];
+    char query[1024];
     Format(query, sizeof(query), g_sql_getPlayerByAuth, auth);
     #if defined SQL_DEBUG
         LogError("[DEBUG-SQL] %s", query);
     #endif
-    SQL_TQuery(g_DbConnection, T_RetrieveKeyValues, query, client);
+    g_DbConnection.Query(T_RetrieveKeyValues, query, client);
 }
 
-public T_RetrieveKeyValues(Handle:owner, Handle:result, const String:error[], any:client)
+public void T_RetrieveKeyValues(Database owner, DBResultSet result, const char[] error, any client)
 {
     /* Make sure the client didn't disconnect while the thread was running */
     if ( !IsClientConnected(client) )
     {
         return;
     }
-    if ( result == INVALID_HANDLE )
+    if ( result == null )
     {
         LogError("Failed to retrieve player by auth (error: %s)", error);
         return;
     }
     g_PlayerWinsLoaded[client] = true;
-    if ( SQL_FetchRow(result) )
+    if ( result.FetchRow() )
     {
-        new id = SQL_FetchInt(result, 0);
-        PlayerWinsData[client] = SQL_FetchInt(result, 1);
-        
+        int id = result.FetchInt(0);
+        PlayerWinsData[client] = result.FetchInt(1);
+
         // update player timestamp
-        decl String:query[1024];
+        char query[1024];
         Format(query, sizeof(query), g_sql_updatePlayerTsById, id);
         #if defined SQL_DEBUG
             LogError("[DEBUG-SQL] %s", query);
         #endif
-        SQL_TQuery(g_DbConnection, T_FastQueryResult, query);
+        g_DbConnection.Query(T_FastQueryResult, query);
     }
     else
     {
@@ -242,9 +251,9 @@ public T_RetrieveKeyValues(Handle:owner, Handle:result, const String:error[], an
     Call_Finish();
 }
 
-public T_FastQueryResult(Handle:owner, Handle:result, const String:error[], any:data)
+public void T_FastQueryResult(Database owner, DBResultSet result, const char[] error, any data)
 {
-    if ( result == INVALID_HANDLE )
+    if ( result == null )
     {
         LogError("Fast query failed (error: %s)", error);
         return;
@@ -253,13 +262,13 @@ public T_FastQueryResult(Handle:owner, Handle:result, const String:error[], any:
 }
 
 // threaded
-SavePlayerDataInfo()
+void SavePlayerDataInfo()
 {
     if (!Prune) {
         return;
     }
 
-    decl String:query[1024];
+    char query[1024];
     if ( g_DbType == DbTypeSqlite ) {
         Format(query, sizeof(query), g_sql_prunePlayers[g_DbType], GetTime() - Prune*86400);
     } else {
@@ -268,28 +277,28 @@ SavePlayerDataInfo()
     #if defined SQL_DEBUG
         LogError("[DEBUG-SQL] %s", query);
     #endif
-    SQL_TQuery(g_DbConnection, T_SavePlayerDataInfo, query);
+    g_DbConnection.Query(T_SavePlayerDataInfo, query);
 }
 
-public T_SavePlayerDataInfo(Handle:owner, Handle:result, const String:error[], any:data)
+public void T_SavePlayerDataInfo(Database owner, DBResultSet result, const char[] error, any data)
 {
-    if ( result == INVALID_HANDLE )
+    if ( result == null )
     {
         LogError("Could not prune players (error: %s)", error);
         return;
     }
 }
 
-OnCreateKeyValues()
+void OnCreateKeyValues()
 {
     SqlConnect();
     LoadRank();
 }
 
 // non-threaded
-public Action:_CmdImport(client, args)
+public Action _CmdImport(int client, int args)
 {
-    decl String:EsFile[PLATFORM_MAX_PATH];
+    char EsFile[PLATFORM_MAX_PATH];
     BuildPath(Path_SM, EsFile, sizeof(EsFile), "data/gungame/es_gg_winners_db.txt");
 
     if ( !FileExists(EsFile) )
@@ -298,67 +307,69 @@ public Action:_CmdImport(client, args)
         return Plugin_Handled;
     }
 
-    new Handle:KvGunGame = CreateKeyValues("gg_winners", BLANK, BLANK);
-    FileToKeyValues(KvGunGame, EsFile);
+    KeyValues KvGunGame = new KeyValues("gg_winners", BLANK, BLANK);
+    KvGunGame.ImportFromFile(EsFile);
 
     /* Go to first SubKey */
-    if ( !KvGotoFirstSubKey(KvGunGame) )
+    if ( !KvGunGame.GotoFirstSubKey() )
     {
         ReplyToCommand(client, "[GunGame] You have no player data to import.");
+        delete KvGunGame;
         return Plugin_Handled;
     }
 
-    decl String:query[1024], String:error[255];
-    decl Wins, String:Name[64];
-    decl ImportedWins, String:Auth[64];
+    char query[1024], error[255];
+    int Wins;
+    char Name[64];
+    int ImportedWins;
+    char Auth[64];
 
-    new bufferLen = sizeof(Name) * 2 + 1;
-    decl String:nameQuoted[bufferLen];
+    char nameQuoted[sizeof(Name) * 2 + 1];
 
     do
     {
-        KvGetSectionName(KvGunGame, Auth, sizeof(Auth));
-        ImportedWins = KvGetNum(KvGunGame, "wins");
+        KvGunGame.GetSectionName(Auth, sizeof(Auth));
+        ImportedWins = KvGunGame.GetNum("wins");
 
         if ( !ImportedWins || Auth[0] != 'S' )
         {
             continue;
         }
 
-        // Load player data        
+        // Load player data
         SQL_LockDatabase(g_DbConnection);
         Format(query, sizeof(query), g_sql_getPlayerByAuth, Auth);
         #if defined SQL_DEBUG
             LogError("[DEBUG-SQL] %s", query);
         #endif
-        new Handle:result = SQL_Query(g_DbConnection, query);
-        if ( result == INVALID_HANDLE )
+        DBResultSet result = SQL_Query(g_DbConnection, query);
+        if ( result == null )
         {
             SQL_GetError(g_DbConnection, error, sizeof(error));
             LogError("Failed to get player (error: %s)", error);
             SQL_UnlockDatabase(g_DbConnection);
             ReplyToCommand(client, "[GunGame] Import finished with sql error");
-            CloseHandle(KvGunGame);
+            delete KvGunGame;
             return Plugin_Handled;
         }
         SQL_UnlockDatabase(g_DbConnection);
-        if ( SQL_FetchRow(result) )
+        if ( result.FetchRow() )
         {
-            Wins = SQL_FetchInt(result, 1);
-            SQL_FetchString(result, 2, Name, sizeof(Name));
+            Wins = result.FetchInt(1);
+            result.FetchString(2, Name, sizeof(Name));
         }
         else
         {
             Wins = 0;
         }
-        CloseHandle(result);
-        
+        delete result;
+
         if ( Wins ) {
-            SQL_EscapeString(g_DbConnection, Name, nameQuoted, bufferLen);
+            g_DbConnection.Escape(Name, nameQuoted, sizeof(nameQuoted));
             Format(query, sizeof(query), g_sql_updatePlayerByAuth, Wins + ImportedWins, nameQuoted, Auth);
         } else {
-            KvGetString(KvGunGame, "name", Name, sizeof(Name));
-            SQL_EscapeString(g_DbConnection, Name, nameQuoted, bufferLen);
+            KvGunGame.GetString("name", Name, sizeof(Name));
+            g_DbConnection.Escape(Name, nameQuoted, sizeof(nameQuoted));
             Format(query, sizeof(query), g_sql_insertPlayer, ImportedWins, nameQuoted, Auth);
         }
 
@@ -373,21 +384,26 @@ public Action:_CmdImport(client, args)
             LogError("Could not save player (error: %s)", error);
             SQL_UnlockDatabase(g_DbConnection);
             ReplyToCommand(client, "[GunGame] Import finished with sql error");
-            CloseHandle(KvGunGame);
+            delete KvGunGame;
             return Plugin_Handled;
         }
         SQL_UnlockDatabase(g_DbConnection);
     }
-    while(KvGotoNextKey(KvGunGame));
+    while(KvGunGame.GotoNextKey());
 
-    CloseHandle(KvGunGame);
-    
+    delete KvGunGame;
+
     /* Reload the players wins in memory */
-    for ( new i = 1; i <= MaxClients; i++ )
+    for ( int i = 1; i <= MaxClients; i++ )
     {
         if ( IsClientAuthorized(i) )
         {
-            GetClientAuthString(i, Auth, sizeof(Auth));
+            GetClientAuthId(i, AuthId_Steam2, Auth, sizeof(Auth));
+
+            if ( strncmp(Auth, "STEAM_1:", 8) == 0 ) {
+                Auth[6] = '0';
+            }
+
             RetrieveKeyValues(i, Auth);
         }
     }
@@ -398,78 +414,80 @@ public Action:_CmdImport(client, args)
 }
 
 // non-threaded
-public Action:_CmdImportDb(client, args)
+public Action _CmdImportDb(int client, int args)
 {
-    decl String:File[PLATFORM_MAX_PATH];
-    BuildPath(Path_SM, File, sizeof(File), "data/gungame/playerdata.txt");
+    char KvFile[PLATFORM_MAX_PATH];
+    BuildPath(Path_SM, KvFile, sizeof(KvFile), "data/gungame/playerdata.txt");
 
-    if ( !FileExists(File) )
+    if ( !FileExists(KvFile) )
     {
         ReplyToCommand(client, "[GunGame] playerdata.txt does not exists to be imported.");
         return Plugin_Handled;
     }
 
-    new Handle:KvGunGame = CreateKeyValues("gg_PlayerData", BLANK, BLANK);
-    FileToKeyValues(KvGunGame, File);
+    KeyValues KvGunGame = new KeyValues("gg_PlayerData", BLANK, BLANK);
+    KvGunGame.ImportFromFile(KvFile);
 
     /* Go to first SubKey */
-    if ( !KvGotoFirstSubKey(KvGunGame) )
+    if ( !KvGunGame.GotoFirstSubKey() )
     {
         ReplyToCommand(client, "[GunGame] You have no player data to import.");
+        delete KvGunGame;
         return Plugin_Handled;
     }
 
-    decl String:query[1024], String:error[255];
-    decl Wins, String:Name[64];
-    decl ImportedWins, String:Auth[64];
+    char query[1024], error[255];
+    int Wins;
+    char Name[64];
+    int ImportedWins;
+    char Auth[64];
 
-    new bufferLen = sizeof(Name) * 2 + 1;
-    decl String:nameQuoted[bufferLen];
+    char nameQuoted[sizeof(Name) * 2 + 1];
 
     do
     {
-        KvGetSectionName(KvGunGame, Auth, sizeof(Auth));
-        ImportedWins = KvGetNum(KvGunGame, "Wins");
+        KvGunGame.GetSectionName(Auth, sizeof(Auth));
+        ImportedWins = KvGunGame.GetNum("Wins");
 
         if ( !ImportedWins || Auth[0] != 'S' )
         {
             continue;
         }
 
-        // Load player data        
+        // Load player data
         SQL_LockDatabase(g_DbConnection);
         Format(query, sizeof(query), g_sql_getPlayerByAuth, Auth);
         #if defined SQL_DEBUG
             LogError("[DEBUG-SQL] %s", query);
         #endif
-        new Handle:result = SQL_Query(g_DbConnection, query);
-        if ( result == INVALID_HANDLE )
+        DBResultSet result = SQL_Query(g_DbConnection, query);
+        if ( result == null )
         {
             SQL_GetError(g_DbConnection, error, sizeof(error));
             LogError("Failed to get player (error: %s)", error);
             SQL_UnlockDatabase(g_DbConnection);
             ReplyToCommand(client, "[GunGame] Import finished with sql error");
-            CloseHandle(KvGunGame);
+            delete KvGunGame;
             return Plugin_Handled;
         }
         SQL_UnlockDatabase(g_DbConnection);
-        if ( SQL_FetchRow(result) )
+        if ( result.FetchRow() )
         {
-            Wins = SQL_FetchInt(result, 1);
-            SQL_FetchString(result, 2, Name, sizeof(Name));
+            Wins = result.FetchInt(1);
+            result.FetchString(2, Name, sizeof(Name));
         }
         else
         {
             Wins = 0;
         }
-        CloseHandle(result);
-        
+        delete result;
+
         if ( Wins ) {
-            SQL_EscapeString(g_DbConnection, Name, nameQuoted, bufferLen);
+            g_DbConnection.Escape(Name, nameQuoted, sizeof(nameQuoted));
             Format(query, sizeof(query), g_sql_updatePlayerByAuth, Wins + ImportedWins, nameQuoted, Auth);
         } else {
-            KvGetString(KvGunGame, "Name", Name, sizeof(Name));
-            SQL_EscapeString(g_DbConnection, Name, nameQuoted, bufferLen);
+            KvGunGame.GetString("Name", Name, sizeof(Name));
+            g_DbConnection.Escape(Name, nameQuoted, sizeof(nameQuoted));
             Format(query, sizeof(query), g_sql_insertPlayer, ImportedWins, nameQuoted, Auth);
         }
 
@@ -484,21 +502,26 @@ public Action:_CmdImportDb(client, args)
             LogError("Could not save player (error: %s)", error);
             SQL_UnlockDatabase(g_DbConnection);
             ReplyToCommand(client, "[GunGame] Import finished with sql error");
-            CloseHandle(KvGunGame);
+            delete KvGunGame;
             return Plugin_Handled;
         }
         SQL_UnlockDatabase(g_DbConnection);
     }
-    while(KvGotoNextKey(KvGunGame));
+    while(KvGunGame.GotoNextKey());
 
-    CloseHandle(KvGunGame);
-    
+    delete KvGunGame;
+
     /* Reload the players wins in memory */
-    for ( new i = 1; i <= MaxClients; i++ )
+    for ( int i = 1; i <= MaxClients; i++ )
     {
         if ( IsClientAuthorized(i) )
         {
-            GetClientAuthString(i, Auth, sizeof(Auth));
+            GetClientAuthId(i, AuthId_Steam2, Auth, sizeof(Auth));
+
+            if ( strncmp(Auth, "STEAM_1:", 8) == 0 ) {
+                Auth[6] = '0';
+            }
+
             RetrieveKeyValues(i, Auth);
         }
     }
@@ -509,7 +532,7 @@ public Action:_CmdImportDb(client, args)
 }
 
 // threaded
-public Action:_CmdRebuild(client, args)
+public Action _CmdRebuild(int client, int args)
 {
     LoadRank();
     ReplyToCommand(client, "[GunGame] Top rank has been rebuilt");
@@ -517,9 +540,9 @@ public Action:_CmdRebuild(client, args)
 }
 
 // non-threaded
-public Action:_CmdReset(client, args)
+public Action _CmdReset(int client, int args)
 {
-    decl String:error[256];
+    char error[256];
     SQL_LockDatabase(g_DbConnection);
     #if defined SQL_DEBUG
         LogError("[DEBUG-SQL] %s", g_sql_dropPlayerTable);
@@ -571,55 +594,55 @@ public Action:_CmdReset(client, args)
     }
     SQL_UnlockDatabase(g_DbConnection);
     ReplyToCommand(client, "[GunGame] Stats has been reseted.");
-    
+
     // reset current players data
-    for (new i = 1; i <= MAXPLAYERS; i++)
+    for (int i = 1; i <= MAXPLAYERS; i++)
     {
         PlayerWinsData[i] = 0;
         PlayerPlaceData[i] = 0;
     }
-    
+
     // reset top 10 data
     TotalWinners = 0;
     g_cfgHandicapTopWins = 0;
-    
+
     return Plugin_Handled;
 }
 
 // threaded
-LoadRank()
+void LoadRank()
 {
     // reset top 10 data
     TotalWinners = 0;
     g_cfgHandicapTopWins = 0;
-    for ( new i = 1; i <= MAXPLAYERS; i++ )
+    for ( int i = 1; i <= MAXPLAYERS; i++ )
     {
         PlayerPlaceData[i] = 0;
     }
-    
+
     CountWinners();
 }
 
 // threaded
-CountWinners()
+void CountWinners()
 {
     #if defined SQL_DEBUG
         LogError("[DEBUG-SQL] %s", g_sql_getPlayersCount);
     #endif
-    SQL_TQuery(g_DbConnection, T_CountWinners, g_sql_getPlayersCount);
+    g_DbConnection.Query(T_CountWinners, g_sql_getPlayersCount);
 }
 
-public T_CountWinners(Handle:owner, Handle:result, const String:error[], any:data)
+public void T_CountWinners(Database owner, DBResultSet result, const char[] error, any data)
 {
-    if ( result == INVALID_HANDLE )
+    if ( result == null )
     {
         LogError("Failed to count players in stat (error: %s)", error);
         return;
     }
-    new count = 0;
-    if ( SQL_FetchRow(result) )
+    int count = 0;
+    if ( result.FetchRow() )
     {
-        count = SQL_FetchInt(result, 0);
+        count = result.FetchInt(0);
     }
     TotalWinners = count;
     #if defined SQL_DEBUG
@@ -630,7 +653,7 @@ public T_CountWinners(Handle:owner, Handle:result, const String:error[], any:dat
 }
 
 // threaded
-LoadTopRankData()
+void LoadTopRankData()
 {
     if ( !g_cfgHandicapTopRank )
     {
@@ -642,7 +665,7 @@ LoadTopRankData()
         Call_Finish();
         return;
     }
-    
+
     if ( g_cfgHandicapTopRank >= TotalWinners )
     {
         g_cfgHandicapTopWins = 1;
@@ -654,17 +677,17 @@ LoadTopRankData()
         return;
     }
 
-    decl String:query[1024];
+    char query[1024];
     Format(query, sizeof(query), g_sql_getTopPlayers, 1, g_cfgHandicapTopRank - 1);
     #if defined SQL_DEBUG
         LogError("[DEBUG-SQL] %s", query);
     #endif
-    SQL_TQuery(g_DbConnection, T_LoadTopRankData, query);
+    g_DbConnection.Query(T_LoadTopRankData, query);
 }
 
-public T_LoadTopRankData(Handle:owner, Handle:result, const String:error[], any:data)
+public void T_LoadTopRankData(Database owner, DBResultSet result, const char[] error, any data)
 {
-    if ( result == INVALID_HANDLE )
+    if ( result == null )
     {
         LogError("Failed to load rank data (error: %s)", error);
         g_cfgHandicapTopWins = 0;
@@ -672,10 +695,10 @@ public T_LoadTopRankData(Handle:owner, Handle:result, const String:error[], any:
         Call_Finish();
         return;
     }
-    
-    if ( SQL_FetchRow(result) )
+
+    if ( result.FetchRow() )
     {
-        g_cfgHandicapTopWins = SQL_FetchInt(result, 1);
+        g_cfgHandicapTopWins = result.FetchInt(1);
         #if defined SQL_DEBUG
             LogError("[DEBUG-SQL] Handicap top wins = %i", g_cfgHandicapTopWins);
         #endif
@@ -693,45 +716,45 @@ public T_LoadTopRankData(Handle:owner, Handle:result, const String:error[], any:
 }
 
 // threaded
-ShowRank(client)
+void ShowRank(int client)
 {
-    new wins = PlayerWinsData[client];
+    int wins = PlayerWinsData[client];
     if ( !wins || PlayerPlaceData[client] )
     {
         ShowRankInChat(client);
         return;
     }
-    
-    decl String:query[1024];
+
+    char query[1024];
     Format(query, sizeof(query), g_sql_getPlayerPlaceByWins, wins);
     #if defined SQL_DEBUG
         LogError("[DEBUG-SQL] %s", query);
     #endif
-    SQL_TQuery(g_DbConnection, T_ShowRank, query, client);
+    g_DbConnection.Query(T_ShowRank, query, client);
 }
 
-public T_ShowRank(Handle:owner, Handle:result, const String:error[], any:client)
+public void T_ShowRank(Database owner, DBResultSet result, const char[] error, any client)
 {
     /* Make sure the client didn't disconnect while the thread was running */
     if ( !IsClientConnected(client) )
     {
         return;
     }
-    if ( result == INVALID_HANDLE )
+    if ( result == null )
     {
         LogError("Failed to retrieve player place by wins (error: %s)", error);
         return;
     }
-    if ( SQL_FetchRow(result) )
+    if ( result.FetchRow() )
     {
-        PlayerPlaceData[client] = SQL_FetchInt(result, 0) + 1;
+        PlayerPlaceData[client] = result.FetchInt(0) + 1;
     }
     ShowRankInChat(client);
 }
 
-ShowRankInChat(client)
+void ShowRankInChat(int client)
 {
-    decl String:name[MAX_NAME_SIZE];
+    char name[MAX_NAME_SIZE];
     GetClientName(client, name, sizeof(name));
     if ( !PlayerPlaceData[client] )
     {
@@ -739,11 +762,11 @@ ShowRankInChat(client)
     }
     else
     {
-        for ( new i = 1; i <= MaxClients; i++ )
+        for ( int i = 1; i <= MaxClients; i++ )
         {
             if ( IsClientInGame(i) && !IsFakeClient(i) )
             {
-                decl String:subtext[64];
+                char subtext[64];
                 SetGlobalTransTarget(i);
                 FormatLanguageNumberTextEx(i, subtext, sizeof(subtext), PlayerWinsData[client], "with wins");
                 CPrintToChatEx(i, client, "%t", "Rank: rank", name, PlayerPlaceData[client], subtext, TotalWinners);
@@ -753,7 +776,7 @@ ShowRankInChat(client)
 }
 
 
-bool:IsPlayerInTopRank(client)
+bool IsPlayerInTopRank(int client)
 {
     #if defined SQL_DEBUG
         LogError("[DEBUG-SQL] IsPlayerInTopRank client=%i", client);
@@ -777,4 +800,3 @@ bool:IsPlayerInTopRank(client)
     #endif
     return true;
 }
-

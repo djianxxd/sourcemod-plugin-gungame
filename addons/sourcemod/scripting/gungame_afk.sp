@@ -7,19 +7,21 @@
 #include <gungame_config>
 #include <colors>
 
-new OffsetOrigin;
-new bool:AfkManagement;
-new AfkDeaths;
-new AfkAction;
-new AfkReload;
-new bool:IsActive;
+#pragma newdecls required
 
-new Float:PlayerAfk[MAXPLAYERS + 1][3];
-new PlayerAfkCount[MAXPLAYERS + 1];
+int OffsetOrigin;
+bool AfkManagement;
+int AfkDeaths;
+int AfkAction;
+int AfkReload;
+bool IsActive;
 
-new State:ConfigState;
+float PlayerAfk[MAXPLAYERS + 1][3];
+int PlayerAfkCount[MAXPLAYERS + 1];
 
-public Plugin:myinfo =
+State ConfigState;
+
+public Plugin myinfo =
 {
     name = "GunGame:SM Afk Management",
     author = GUNGAME_AUTHOR,
@@ -28,21 +30,21 @@ public Plugin:myinfo =
     url = GUNGAME_URL
 };
 
-public OnPluginStart()
+public void OnPluginStart()
 {
     LoadTranslations("gungame_afk");
-    
-    OffsetOrigin = FindSendPropOffs("CBaseEntity", "m_vecOrigin");
+
+    OffsetOrigin = FindSendPropInfo("CBaseEntity", "m_vecOrigin");
 
     if(OffsetOrigin == INVALID_OFFSET)
     {
-        decl String:Error[128];
+        char Error[128];
         FormatEx(Error, sizeof(Error), "FATAL ERROR OffsetOrigin [%d]", OffsetOrigin);
-        SetFailState(Error);
+        SetFailState("%s", Error);
     }
 }
 
-public GG_OnStartup()
+public void GG_OnStartup(bool Command)
 {
     if(!IsActive)
     {
@@ -52,7 +54,7 @@ public GG_OnStartup()
     }
 }
 
-public GG_OnShutdown()
+public void GG_OnShutdown(bool Command)
 {
     if(IsActive)
     {
@@ -62,14 +64,14 @@ public GG_OnShutdown()
     }
 }
 
-public _PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
+public void _PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
     if(!IsActive || !AfkManagement)
     {
         return;
     }
 
-    new client = GetClientOfUserId(GetEventInt(event, "userid"));
+    int client = GetClientOfUserId(event.GetInt("userid"));
 
     if(!client || IsFakeClient(client))
     {
@@ -82,14 +84,14 @@ public _PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
     GetEntDataVector(client, OffsetOrigin, PlayerAfk[client]);
 }
 
-public _WeaponFire(Handle:event, const String:name[], bool:dontBroadcast)
+public void _WeaponFire(Event event, const char[] name, bool dontBroadcast)
 {
     if(!IsActive || !AfkManagement)
     {
         return;
     }
 
-    new client = GetClientOfUserId(GetEventInt(event, "userid"));
+    int client = GetClientOfUserId(event.GetInt("userid"));
 
     if(client && !IsFakeClient(client))
     {
@@ -97,7 +99,7 @@ public _WeaponFire(Handle:event, const String:name[], bool:dontBroadcast)
     }
 }
 
-public Action:GG_OnClientDeath(Killer, Victim, WeaponId, bool:TeamKilled)
+public Action GG_OnClientDeath(int Killer, int Victim, int WeaponId, bool TeamKilled)
 {
     /* Afk management only checks after the player worldspawn/suicide checks */
     if ( !AfkManagement )
@@ -105,7 +107,7 @@ public Action:GG_OnClientDeath(Killer, Victim, WeaponId, bool:TeamKilled)
         return Plugin_Continue;
     }
 
-    decl Float:Origin[3];
+    float Origin[3];
     GetEntDataVector(Victim, OffsetOrigin, Origin);
 
     /* Basically by the time you get here the player drop approx about 55-60 units. So checking z now here is invalid. */
@@ -123,11 +125,11 @@ public Action:GG_OnClientDeath(Killer, Victim, WeaponId, bool:TeamKilled)
             }
             else if ( AfkAction & AFK_SPECTATE )
             {
-                ChangeClientTeam(Victim, TEAM_SPECTATOR);         
+                ChangeClientTeam(Victim, TEAM_SPECTATOR);
                 PlayerAfkCount[Victim] = 0;
             }
         }
-        
+
         if ( AfkReload )
         {
             return Plugin_Changed;
@@ -140,7 +142,7 @@ public Action:GG_OnClientDeath(Killer, Victim, WeaponId, bool:TeamKilled)
     return Plugin_Continue;
 }
 
-public GG_ConfigNewSection(const String:name[])
+public void GG_ConfigNewSection(const char[] name)
 {
     if ( strcmp("Config", name, false) == 0 )
     {
@@ -148,12 +150,12 @@ public GG_ConfigNewSection(const String:name[])
     }
 }
 
-public GG_ConfigKeyValue(const String:key[], const String:value[])
+public void GG_ConfigKeyValue(const char[] key, const char[] value)
 {
     if ( ConfigState == CONFIG_STATE_CONFIG )
     {
         if ( strcmp("AfkManagement", key, false) == 0 ) {
-            AfkManagement = bool:StringToInt(value);
+            AfkManagement = view_as<bool>(StringToInt(value));
         } else if(strcmp("AfkDeaths", key, false) == 0) {
             AfkDeaths = StringToInt(value);
         } else if(strcmp("AfkAction", key, false) == 0) {
@@ -164,12 +166,12 @@ public GG_ConfigKeyValue(const String:key[], const String:value[])
     }
 }
 
-public GG_ConfigParseEnd()
+public void GG_ConfigParseEnd()
 {
     ConfigState = CONFIG_STATE_NONE;
 }
 
-public OnClientAuthorized(client, const String:auth[])
+public void OnClientAuthorized(int client, const char[] auth)
 {
     PlayerAfkCount[client] = 0;
 }

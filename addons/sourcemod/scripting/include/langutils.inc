@@ -1,9 +1,14 @@
-FormatLanguageNumberTextEx(client, String:text[], size, number, const String:tplName[])
+#if defined _langutils_included_
+  #endinput
+#endif
+#define _langutils_included_
+
+void FormatLanguageNumberTextEx(int client, char[] text, int size, int number, const char[] tplName)
 {
     SetGlobalTransTarget(client);
-    decl String:tpl[64];
-    new num10 = number % 10;
-    new num100 = number % 100;
+    char tpl[64];
+    int num10 = number % 10;
+    int num100 = number % 100;
 
     if ( number == 1 ) {
         Format(tpl, sizeof(tpl), "1>%s", tplName);
@@ -16,4 +21,3 @@ FormatLanguageNumberTextEx(client, String:text[], size, number, const String:tpl
     }
     Format(text, size, "%t", tpl, number);
 }
-

@@ -1,5 +1,5 @@
-/* Weapon index lookup kv */
-new String:WeaponFile[PLATFORM_MAX_PATH];
-new Handle:KvWeapon = INVALID_HANDLE;
-new bool:WeaponOpen;
-new Handle:TrieWeapon = INVALID_HANDLE;
+﻿/* Weapon index lookup kv */
+char WeaponFile[PLATFORM_MAX_PATH];
+KeyValues KvWeapon = null;
+bool WeaponOpen;
+StringMap TrieWeapon = null;

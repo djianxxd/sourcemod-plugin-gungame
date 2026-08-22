@@ -1,13 +1,13 @@
 
-stock GameName:DetectGame() {
-    decl String:gameName[30];
+stock GameName DetectGame() {
+    char gameName[30];
     GetGameFolderName(gameName, sizeof(gameName));
     if (StrEqual(gameName, "cstrike", false)) {
-        return GameName:Css;
+        return Css;
     } else if (StrEqual(gameName, "csgo", false)) {
-        return GameName:Csgo;
+        return Csgo;
     } else {
         LogError("ERROR: Unsupported game %s. Please contact the author.", gameName);
-        return GameName:None;
+        return None;
     }
 }

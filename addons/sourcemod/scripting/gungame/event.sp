@@ -1,4 +1,4 @@
-OnEventStart()
+﻿void OnEventStart()
 {
     // Events
     HookEvent("round_start", _RoundState);
@@ -18,7 +18,7 @@ OnEventStart()
     }
 }
 
-OnEventShutdown()
+void OnEventShutdown()
 {
     // Events
     UnhookEvent("round_start", _RoundState);
@@ -38,33 +38,33 @@ OnEventShutdown()
     }
 }
 
-StartSwitchHook() {
-    for (new client = 1; client <= MaxClients; client++) { 
-        if ( IsClientInGame(client) ) { 
+void StartSwitchHook() {
+    for (int client = 1; client <= MaxClients; client++) {
+        if ( IsClientInGame(client) ) {
             g_BlockSwitch[client] = false;
             #if defined WITH_SDKHOOKS
             SDKHook(client, SDKHook_WeaponSwitch, OnWeaponSwitch);
             #endif
-        } 
+        }
     }
 }
 
-StopSwitchHook() {
-    for (new client = 1; client <= MaxClients; client++) { 
-        if ( IsClientInGame(client) ) { 
+void StopSwitchHook() {
+    for (int client = 1; client <= MaxClients; client++) {
+        if ( IsClientInGame(client) ) {
             #if defined WITH_SDKHOOKS
             SDKUnhook(client, SDKHook_WeaponSwitch, OnWeaponSwitch);
             #endif
-        } 
+        }
     }
 }
 
-public _ItemPickup(Handle:event, const String:name[], bool:dontBroadcast) {
+public void _ItemPickup(Event event, const char[] name, bool dontBroadcast) {
     if (!IsActive){
         return;
     }
 
-    new client = GetClientOfUserId(GetEventInt(event, "userid"));
+    int client = GetClientOfUserId(event.GetInt("userid"));
     if (KnifeElite) {
         if (client && PlayerState[client] & KNIFE_ELITE) {
             UTIL_ForceDropAllWeapon(client, false);
@@ -72,21 +72,21 @@ public _ItemPickup(Handle:event, const String:name[], bool:dontBroadcast) {
     }
 }
 
-public _BombPickup(Handle:event, const String:name[], bool:dontBroadcast) {
+public void _BombPickup(Event event, const char[] name, bool dontBroadcast) {
     if (IsActive && MapStatus & OBJECTIVE_REMOVE_BOMB) {
-        new client = GetClientOfUserId(GetEventInt(event, "userid"));
+        int client = GetClientOfUserId(event.GetInt("userid"));
         if (client) {
             UTIL_ForceDropC4(client);
         }
     }
 }
 
-public _PlayerTeam(Handle:event, const String:name[], bool:dontBroadcast)
+public void _PlayerTeam(Event event, const char[] name, bool dontBroadcast)
 {
-    new oldTeam         = GetEventInt(event, "oldteam");
-    new newTeam         = GetEventInt(event, "team");
-    new bool:disconnect = GetEventBool(event, "disconnect");
-    
+    int oldTeam         = event.GetInt("oldteam");
+    int newTeam         = event.GetInt("team");
+    bool disconnect     = event.GetBool("disconnect");
+
     switch ( oldTeam )
     {
         case TEAM_T:
@@ -120,7 +120,7 @@ public _PlayerTeam(Handle:event, const String:name[], bool:dontBroadcast)
         UnlimitedNades = ( Tcount <= UnlimitedNadesMinPlayers || CTcount <= UnlimitedNadesMinPlayers );
     }
 
-    new client = GetClientOfUserId(GetEventInt(event, "userid"));
+    int client = GetClientOfUserId(event.GetInt("userid"));
     if ( client && !disconnect && (oldTeam >= 2) && IsClientInGame(client) && IsPlayerAlive(client) )
     {
         UTIL_StopTripleEffects(client);
@@ -132,7 +132,7 @@ public _PlayerTeam(Handle:event, const String:name[], bool:dontBroadcast)
     g_teamChange[client] = true;
 }
 
-public _RoundState(Handle:event, const String:name[], bool:dontBroadcast)
+public void _RoundState(Event event, const char[] name, bool dontBroadcast)
 {
     if ( !IsActive )
     {
@@ -184,7 +184,7 @@ public _RoundState(Handle:event, const String:name[], bool:dontBroadcast)
     }
 }
 
-public Action:RemoveHostages(Handle:timer)
+public Action RemoveHostages(Handle timer, any data)
 {
     /**
      * m_bHostageAlive
@@ -193,7 +193,7 @@ public Action:RemoveHostages(Handle:timer)
 
     if(HostageEntInfo)
     {
-        for(new i = 0, edict; i < MAXHOSTAGE; i++)
+        for(int i = 0, edict; i < MAXHOSTAGE; i++)
         {
             // Will this return 0 if there is no hostage id in the store? from m_iHostageEntityIDs
             edict = GetEntData(HostageEntInfo, OffsetHostage + (i * 4));
@@ -208,32 +208,33 @@ public Action:RemoveHostages(Handle:timer)
             }
         }
     }
+    return Plugin_Stop;
 }
 
-public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
+public void _PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
     // Player has died.
     if ( !IsActive )
     {
         return;
     }
-    
-    new Victim = GetClientOfUserId(GetEventInt(event, "userid"));
+
+    int Victim = GetClientOfUserId(event.GetInt("userid"));
     UTIL_StopTripleEffects(Victim);
-    
-    new Killer = GetClientOfUserId(GetEventInt(event, "attacker"));
+
+    int Killer = GetClientOfUserId(event.GetInt("attacker"));
     UTIL_UpdatePlayerScoreDelayed(Victim);
     UTIL_UpdatePlayerScoreDelayed(Killer);
-    
+
     /* They change team at round end don't punish them. */
     if ( !RoundStarted && !AllowLevelUpAfterRoundEnd )
     {
         return;
     }
-    
-    decl String:Weapon[MAX_WEAPON_NAME_SIZE], String:vName[MAX_NAME_SIZE], String:kName[MAX_NAME_SIZE];
 
-    GetEventString(event, "weapon", Weapon, sizeof(Weapon));
+    char Weapon[MAX_WEAPON_NAME_SIZE], vName[MAX_NAME_SIZE], kName[MAX_NAME_SIZE];
+
+    event.GetString("weapon", Weapon, sizeof(Weapon));
     GetClientName(Victim, vName, sizeof(vName));
     GetClientName(Killer, kName, sizeof(kName));
 
@@ -252,7 +253,7 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
     }
 
     /* They killed themself by kill command or by hegrenade etc */
-    if ( Victim == Killer ) 
+    if ( Victim == Killer )
     {
         /* (Weapon is event weapon name, can be 'world' or 'hegrenade' etc) */
         if ( CommitSuicide && ( RoundStarted || /* weapon is not 'world' (ie not kill command) */ Weapon[0] != 'w') && (!g_teamChange[Victim]) )
@@ -264,8 +265,8 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 
     // Victim > 0 && Killer > 0
 
-    new WeaponIndex = UTIL_GetWeaponIndex(Weapon), WeaponLevelIndex = g_WeaponLevelIndex[WeaponIndex];
-    new Action:ret;
+    int WeaponIndex = UTIL_GetWeaponIndex(Weapon), WeaponLevelIdx = g_WeaponLevelIndex[WeaponIndex];
+    Action ret;
 
     if ( WarmupEnabled )
     {
@@ -276,12 +277,12 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
         return;
     }
 
-    new bool:TeamKill = (!FFA) && (GetClientTeam(Victim) == GetClientTeam(Killer));
+    bool TeamKill = (!FFA) && (GetClientTeam(Victim) == GetClientTeam(Killer));
     Call_StartForward(FwdDeath);
     Call_PushCell(Killer);
     Call_PushCell(Victim);
     Call_PushCell(WeaponIndex);
-    Call_PushCell(TeamKill && GetConVarInt(mp_friendlyfire));
+    Call_PushCell(view_as<int>(TeamKill) && mp_friendlyfire.IntValue);
     Call_Finish(ret);
 
     if ( ret || TeamKill )
@@ -293,30 +294,30 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
         return;
     }
 
-    new level = PlayerLevel[Killer], WeaponLevel = WeaponOrderId[level], PlayerLevelIndex = g_WeaponLevelIndex[WeaponLevel];
+    int level = PlayerLevel[Killer], WeaponLevel = WeaponOrderId[level], PlayerLevelIdx = g_WeaponLevelIndex[WeaponLevel];
 
     /* Give them another grenade if they killed another person with another weapon */
-    if ( (PlayerLevelIndex == g_WeaponLevelIdHegrenade) 
-        && (WeaponLevelIndex != g_WeaponLevelIdHegrenade) 
-        && !( (WeaponLevelIndex == g_WeaponLevelIdKnife) && KnifeProHE ) // TODO: Remove this statement and make check if killer not leveled up, than give extra nade.
+    if ( (PlayerLevelIdx == g_WeaponLevelIdHegrenade)
+        && (WeaponLevelIdx != g_WeaponLevelIdHegrenade)
+        && !( (WeaponLevelIdx == g_WeaponLevelIdKnife) && KnifeProHE ) // TODO: Remove this statement and make check if killer not leveled up, than give extra nade.
     ) {
         #if defined GUNGAME_DEBUG
-            LogError("[DEBUG-GUNGAME] ... call UTIL_GiveExtraNade, killer=%i knife=%i", Killer, (WeaponLevelIndex == g_WeaponLevelIdKnife));
+            LogError("[DEBUG-GUNGAME] ... call UTIL_GiveExtraNade, killer=%i knife=%i", Killer, view_as<int>(WeaponLevelIdx == g_WeaponLevelIdKnife));
         #endif
-        UTIL_GiveExtraNade(Killer, (WeaponLevelIndex == g_WeaponLevelIdKnife));
+        UTIL_GiveExtraNade(Killer, (WeaponLevelIdx == g_WeaponLevelIdKnife));
     }
 
     /* Give them another taser if they killed another person with another weapon */
-    if ( (PlayerLevelIndex == g_WeaponLevelIdTaser) 
-        && (WeaponLevelIndex == g_WeaponLevelIdKnife)
+    if ( (PlayerLevelIdx == g_WeaponLevelIdTaser)
+        && (WeaponLevelIdx == g_WeaponLevelIdKnife)
         && g_Cfg_ExtraTaserOnKnifeKill
     ) {
         UTIL_GiveExtraTaser(Killer);
     }
 
     /* Give them another molotov if they killed another person with another weapon */
-    if ((PlayerLevelIndex == g_WeaponLevelIdMolotov)
-        && (WeaponLevelIndex == g_WeaponLevelIdKnife)
+    if ((PlayerLevelIdx == g_WeaponLevelIdMolotov)
+        && (WeaponLevelIdx == g_WeaponLevelIdKnife)
         && g_Cfg_ExtraMolotovOnKnifeKill
     ) {
         UTIL_GiveExtraMolotov(Killer, WeaponLevel);
@@ -330,11 +331,11 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
     /**
      * Steal level from other player.
      */
-    if ( KnifePro && (WeaponLevelIndex == g_WeaponLevelIdKnife) )
+    if ( KnifePro && (WeaponLevelIdx == g_WeaponLevelIdKnife) )
     {
         for (;;)
         {
-            new VictimLevel = PlayerLevel[Victim];
+            int VictimLevel = PlayerLevel[Victim];
 
             if ( VictimLevel < KnifeProMinLevel )
             {
@@ -349,7 +350,7 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
             }
 
             if ( !g_Cfg_DisableLevelDown ) {
-                new ChangedLevel = UTIL_ChangeLevel(Victim, -1, true);
+                int ChangedLevel = UTIL_ChangeLevel(Victim, -1, true);
                 if ( VictimLevel )
                 {
                     if ( ChangedLevel == VictimLevel ) {
@@ -359,26 +360,26 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
                 }
             }
 
-            if ( (PlayerLevelIndex == g_WeaponLevelIdKnife) )
+            if ( (PlayerLevelIdx == g_WeaponLevelIdKnife) )
             {
                 if ( UTIL_GetCustomKillPerLevel(level) > 1 ) {
                     break;
                 }
             }
 
-            if ( !KnifeProHE && PlayerLevelIndex == g_WeaponLevelIdHegrenade ) {
+            if ( !KnifeProHE && PlayerLevelIdx == g_WeaponLevelIdHegrenade ) {
                 return;
             }
 
-            if (PlayerLevelIndex == g_WeaponLevelIdTaser) {
+            if (PlayerLevelIdx == g_WeaponLevelIdTaser) {
                 return;
             }
 
-            if (PlayerLevelIndex == g_WeaponLevelIdMolotov) {
+            if (PlayerLevelIdx == g_WeaponLevelIdMolotov) {
                 return;
             }
 
-            new oldLevelKiller = level;
+            int oldLevelKiller = level;
             level = UTIL_ChangeLevel(Killer, 1, true, Victim);
             if ( oldLevelKiller == level ) {
                 return;
@@ -386,9 +387,9 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 
             PrintLeaderToChat(Killer, oldLevelKiller, level, kName);
             CurrentLevelPerRound[Killer]++;
-                   
+
             if ( TurboMode ) {
-                UTIL_GiveNextWeapon(Killer, level, (WeaponLevelIndex == g_WeaponLevelIdKnife));
+                UTIL_GiveNextWeapon(Killer, level, (WeaponLevelIdx == g_WeaponLevelIdKnife));
             }
 
             CheckForTripleLevel(Killer);
@@ -397,17 +398,17 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
         }
     }
 
-    new LevelUpWithPhysics = false;
+    bool LevelUpWithPhysics = false;
 
     /* They didn't kill with the weapon required */
-    if (WeaponLevelIndex != PlayerLevelIndex) {
-        if (WeaponLevelIndex == g_WeaponLevelIdHegrenade) {
+    if (WeaponLevelIdx != PlayerLevelIdx) {
+        if (WeaponLevelIdx == g_WeaponLevelIdHegrenade) {
             // Killed with grenade made by map author
-            if ( 
+            if (
                 g_Cfg_CanLevelUpWithMapNades
-                && ( 
+                && (
                     g_Cfg_CanLevelUpWithNadeOnKnife
-                    || !(PlayerLevelIndex == g_WeaponLevelIdKnife)
+                    || !(PlayerLevelIdx == g_WeaponLevelIdKnife)
                 )
             ) {
                 LevelUpWithPhysics = true;
@@ -416,13 +417,13 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
             }
         } else {
             // Maybe killed with physics made by map author
-            if ( 
+            if (
                 g_Cfg_CanLevelUpWithPhysics
-                && ( StrEqual(Weapon, "prop_physics") || StrEqual(Weapon, "prop_physics_multiplayer") ) 
-                && ( 
-                    ( ( PlayerLevelIndex != g_WeaponLevelIdHegrenade) && !(PlayerLevelIndex == g_WeaponLevelIdKnife) )
-                    || ( g_Cfg_CanLevelUpWithPhysicsG && (PlayerLevelIndex == g_WeaponLevelIdHegrenade) )
-                    || ( g_Cfg_CanLevelUpWithPhysicsK && (PlayerLevelIndex == g_WeaponLevelIdKnife) )
+                && ( StrEqual(Weapon, "prop_physics") || StrEqual(Weapon, "prop_physics_multiplayer") )
+                && (
+                    ( ( PlayerLevelIdx != g_WeaponLevelIdHegrenade) && !(PlayerLevelIdx == g_WeaponLevelIdKnife) )
+                    || ( g_Cfg_CanLevelUpWithPhysicsG && (PlayerLevelIdx == g_WeaponLevelIdHegrenade) )
+                    || ( g_Cfg_CanLevelUpWithPhysicsK && (PlayerLevelIdx == g_WeaponLevelIdKnife) )
                 )
             ) {
                 LevelUpWithPhysics = true;
@@ -432,10 +433,10 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
         }
     }
 
-    new killsPerLevel = UTIL_GetCustomKillPerLevel(level);
+    int killsPerLevel = UTIL_GetCustomKillPerLevel(level);
     if ( ( killsPerLevel > 1 ) && !LevelUpWithPhysics )
     {
-        new kills = ++CurrentKillsPerWeap[Killer], Handled;
+        int kills = ++CurrentKillsPerWeap[Killer], Handled;
 
         if ( kills <= killsPerLevel )
         {
@@ -443,7 +444,9 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
             Call_PushCell(Killer);
             Call_PushCell(kills);
             Call_PushCell(1);
-            Call_Finish(Handled);
+            Call_Finish(ret);
+
+            Handled = view_as<int>(ret);
 
             if ( Handled )
             {
@@ -457,23 +460,23 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
                 {
                     if ( !g_Cfg_ShowSpawnMsgInHintBox )
                     {
-                        decl String:subtext[64];
+                        char subtext[64];
                         FormatLanguageNumberTextEx(Killer, subtext, sizeof(subtext), killsPerLevel - kills, "points");
                         CPrintToChat(Killer, "%t", "You need kills to advance to the next level", subtext, kills, killsPerLevel);
                     }
                     else
                     {
                         SetGlobalTransTarget(Killer);
-                        decl String:textHint[256];
-                        decl String:subtext[64];
+                        char textHint[256];
+                        char subtext[64];
                         FormatLanguageNumberTextEx(Killer, subtext, sizeof(subtext), killsPerLevel - kills, "points");
                         Format(textHint, sizeof(textHint), "%t", "You need kills to advance to the next level", subtext, kills, killsPerLevel);
                         CRemoveTags(textHint, sizeof(textHint));
-                        
+
                         UTIL_ShowHintTextMulti(Killer, textHint, 3, 1.0);
                     }
                 }
-                
+
 
                 UTIL_PlaySound(Killer, MultiKill);
                 if ( ReloadWeapon )
@@ -484,19 +487,19 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
             }
         }
     }
-        
+
     // reload weapon
     if ( !TurboMode && ReloadWeapon )
     {
         UTIL_ReloadActiveWeapon(Killer, WeaponLevel);
     }
-    
+
     if ( KnifeElite )
     {
         PlayerState[Killer] |= KNIFE_ELITE;
     }
 
-    new oldLevelKiller = level;
+    int oldLevelKiller = level;
     level = UTIL_ChangeLevel(Killer, 1, _, Victim);
     if ( oldLevelKiller == level )
     {
@@ -509,21 +512,21 @@ public _PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 
     if ( TurboMode || KnifeElite )
     {
-        UTIL_GiveNextWeapon(Killer, level, (WeaponLevelIndex == g_WeaponLevelIdKnife));
+        UTIL_GiveNextWeapon(Killer, level, (WeaponLevelIdx == g_WeaponLevelIdKnife));
     }
 
     CheckForTripleLevel(Killer);
 }
 
 // Player has spawned
-public _PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
+public void _PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
     if ( !IsActive )
     {
         return;
     }
 
-    new client = GetClientOfUserId(GetEventInt(event, "userid"));
+    int client = GetClientOfUserId(event.GetInt("userid"));
 
     if ( !client )
     {
@@ -537,10 +540,10 @@ public _PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 
     UTIL_UpdatePlayerScoreLevel(client);
     UTIL_StopBonusGravity(client);
-    
+
     g_teamChange[client] = false;
-    
-    new team = GetClientTeam(client);
+
+    int team = GetClientTeam(client);
 
     if ( team != TEAM_T && team != TEAM_CT )
     {
@@ -576,7 +579,7 @@ public _PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
                 ShowJoinMsgPanel(client);
             }
         }
-        
+
         if ( !StatsEnabled || GG_IsPlayerWinsLoaded(client) ) /* HINT: gungame_stats */
         {
             UTIL_SetHandicapForClient(client);
@@ -606,7 +609,7 @@ public _PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
         }
     }
 
-    new Level = PlayerLevel[client];
+    int Level = PlayerLevel[client];
     UTIL_ForceDropAllWeapon(client, false);
 
     /* For deathmatch when they get respawn after round start freeze after game winner. */
@@ -631,7 +634,7 @@ public _PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
     UTIL_GiveNextWeapon(client, Level, false, 0.3, true);
 
     // spawn chat messages
-    new killsPerLevel = UTIL_GetCustomKillPerLevel(Level);
+    int killsPerLevel = UTIL_GetCustomKillPerLevel(Level);
 
     if ( !g_Cfg_ShowSpawnMsgInHintBox )
     {
@@ -639,8 +642,8 @@ public _PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 
         if ( MultiKillChat && ( killsPerLevel > 1 ) )
         {
-            new kills = CurrentKillsPerWeap[client];
-            decl String:subtext[64];
+            int kills = CurrentKillsPerWeap[client];
+            char subtext[64];
             FormatLanguageNumberTextEx(client, subtext, sizeof(subtext), killsPerLevel - kills, "points");
             CPrintToChat(client, "%t", "You need kills to advance to the next level", subtext, kills, killsPerLevel);
         }
@@ -648,12 +651,12 @@ public _PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
     else
     {
         SetGlobalTransTarget(client);
-        decl String:textHint[512], String:textHint2[256];
+        char textHint[512], textHint2[256];
         Format(textHint, sizeof(textHint), "%t", "You are on level", Level + 1, WeaponOrderName[Level]);
         CRemoveTags(textHint, sizeof(textHint));
         if ( g_Cfg_ShowLeaderInHintBox && CurrentLeader )
         {
-            new leaderLevel = PlayerLevel[CurrentLeader];
+            int leaderLevel = PlayerLevel[CurrentLeader];
             if ( client == CurrentLeader ) {
                 Format(textHint2, sizeof(textHint2), "\n%t", "LevelPanel: You are currently the leader");
             } else if ( Level == leaderLevel ) {
@@ -661,13 +664,13 @@ public _PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
             } else {
                 Format(textHint2, sizeof(textHint2), "\n%t", "Hint: Leader is on level", leaderLevel + 1, WeaponOrderName[leaderLevel]);
             }
-            
+
             StrCat(textHint, sizeof(textHint), textHint2);
         }
         if ( MultiKillChat && ( killsPerLevel > 1 ) )
         {
-            new kills = CurrentKillsPerWeap[client];
-            decl String:subtext[64];
+            int kills = CurrentKillsPerWeap[client];
+            char subtext[64];
             FormatLanguageNumberTextEx(client, subtext, sizeof(subtext), killsPerLevel - kills, "points");
             Format(textHint2, sizeof(textHint2), "\n%t", "You need kills to advance to the next level", subtext, kills, killsPerLevel);
             CRemoveTags(textHint2, sizeof(textHint2));
@@ -677,20 +680,20 @@ public _PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
     }
 }
 
-public _BombState(Handle:event, const String:name[], bool:dontBroadcast)
+public void _BombState(Event event, const char[] name, bool dontBroadcast)
 {
     if ( !IsActive || !ObjectiveBonus || (!RoundStarted && name[5] != 'e') )
     {
         return;
     }
-    new client = GetClientOfUserId(GetEventInt(event, "userid"));
+    int client = GetClientOfUserId(event.GetInt("userid"));
 
     if ( !client || !IsClientConnected(client) || !IsClientInGame(client) )
     {
         return;
     }
     UTIL_UpdatePlayerScoreDelayed(client);
-    
+
     if ( !ObjectiveBonusWin && ( PlayerLevel[client] >= WeaponOrderCount - ObjectiveBonus ) )
     {
         return;
@@ -701,19 +704,19 @@ public _BombState(Handle:event, const String:name[], bool:dontBroadcast)
     {
         return;
     }
-    
+
     /* Give them a level if give level for objective */
-    new oldLevel = PlayerLevel[client];
-    new newLevel = UTIL_ChangeLevel(client, ObjectiveBonus);
+    int oldLevel = PlayerLevel[client];
+    int newLevel = UTIL_ChangeLevel(client, ObjectiveBonus);
     if ( newLevel == oldLevel )
     {
         return;
     }
-    decl String:cname[MAX_NAME_SIZE];
+    char cname[MAX_NAME_SIZE];
     GetClientName(client, cname, sizeof(cname));
     PrintLeaderToChat(client, oldLevel, newLevel, cname);
 
-    decl String:subtext[64];
+    char subtext[64];
     FormatLanguageNumberTextEx(client, subtext, sizeof(subtext), ObjectiveBonus, "levels");
     if ( name[5] == 'p' )
     {
@@ -729,25 +732,25 @@ public _BombState(Handle:event, const String:name[], bool:dontBroadcast)
     }
 }
 
-public _HostageKilled(Handle:event, const String:name[], bool:dontBroadcast)
+public void _HostageKilled(Event event, const char[] name, bool dontBroadcast)
 {
     if ( !IsActive || !RoundStarted )
     {
         return;
     }
 
-    new client = GetClientOfUserId(GetEventInt(event, "userid"));
+    int client = GetClientOfUserId(event.GetInt("userid"));
 
     if ( !client )
     {
         return;
     }
 
-    decl String:Name[MAX_NAME_SIZE];
+    char Name[MAX_NAME_SIZE];
     GetClientName(client, Name, sizeof(Name));
 
-    new oldLevel = PlayerLevel[client];
-    new newLevel = UTIL_ChangeLevel(client, -1);
+    int oldLevel = PlayerLevel[client];
+    int newLevel = UTIL_ChangeLevel(client, -1);
     if ( oldLevel == newLevel )
     {
         return;
@@ -756,18 +759,18 @@ public _HostageKilled(Handle:event, const String:name[], bool:dontBroadcast)
     CPrintToChatAllEx(client, "%t", "Has lost a level by killing a hostage", Name);
 }
 
-ClientSuicide(client, const String:Name[], loose)
+void ClientSuicide(int client, const char[] Name, int loose)
 {
-    new oldLevel = PlayerLevel[client];
-    new newLevel = UTIL_ChangeLevel(client, -loose);
+    int oldLevel = PlayerLevel[client];
+    int newLevel = UTIL_ChangeLevel(client, -loose);
     if ( oldLevel == newLevel )
     {
         return;
     }
     if ( loose > 1 )
     {
-        decl String:subtext[64];
-        for ( new i = 1; i <= MaxClients; i++ )
+        char subtext[64];
+        for ( int i = 1; i <= MaxClients; i++ )
         {
             if ( IsClientInGame(i) )
             {
@@ -781,19 +784,19 @@ ClientSuicide(client, const String:Name[], loose)
     {
         CPrintToChatAllEx(client, "%t", "Has lost a level by suicided", Name);
     }
-    
+
     PrintLeaderToChat(client, oldLevel, newLevel, Name);
 }
 
-public _HeExplode(Handle:event, const String:name[], bool:dontBroadcast) {
-    new client = GetClientOfUserId(GetEventInt(event, "userid"));
+public void _HeExplode(Event event, const char[] name, bool dontBroadcast) {
+    int client = GetClientOfUserId(event.GetInt("userid"));
     if ( !IsClientInGame(client) || !IsPlayerAlive(client) ) {
         return;
     }
 
     if ( ( WarmupNades && WarmupEnabled )
          || ( g_WeaponLevelIndex[WeaponOrderId[PlayerLevel[client]]] == g_WeaponLevelIdHegrenade
-            && ( UnlimitedNades 
+            && ( UnlimitedNades
                || ( NumberOfNades && g_NumberOfNades[client] ) ) ) )
     {
         /* Do not give them another nade if they already have one */
@@ -802,8 +805,8 @@ public _HeExplode(Handle:event, const String:name[], bool:dontBroadcast) {
                 g_NumberOfNades[client]--;
             }
 
-            new bool:blockSwitch = g_SdkHooksEnabled && g_Cfg_BlockWeaponSwitchOnNade;
-            new newWeapon = GivePlayerItemWrapper(client, g_WeaponName[g_WeaponIdHegrenade], blockSwitch);
+            bool blockSwitch = g_SdkHooksEnabled && g_Cfg_BlockWeaponSwitchOnNade;
+            int newWeapon = GivePlayerItemWrapper(client, g_WeaponName[g_WeaponIdHegrenade], blockSwitch);
             if (!blockSwitch) {
                 UTIL_UseWeapon(client, g_WeaponIdHegrenade);
                 UTIL_FastSwitchWithCheck(client, newWeapon, true, g_WeaponIdHegrenade);
@@ -812,16 +815,15 @@ public _HeExplode(Handle:event, const String:name[], bool:dontBroadcast) {
     }
 }
 
-public Action:OnWeaponSwitch(client, weapon) {
+public Action OnWeaponSwitch(int client, int weapon) {
     if ( g_BlockSwitch[client] ) {
         return Plugin_Handled;
     } else if (g_Cfg_FastSwitchOnChangeWeapon && weapon) {
 
         if (!g_BlockFastSwitchOnChange[client]) {
-            new Handle:data;
-            data = CreateDataPack();
-            WritePackCell(data, client);
-            WritePackCell(data, weapon);
+            DataPack data = new DataPack();
+            data.WriteCell(client);
+            data.WriteCell(weapon);
 
             CreateTimer(0.1, Timer_FastSwitch, data);
         }
@@ -831,22 +833,24 @@ public Action:OnWeaponSwitch(client, weapon) {
     return Plugin_Continue;
 }
 
-public Action:Timer_FastSwitch(Handle:timer, any:data) {
-    ResetPack(data);
-    new client = ReadPackCell(data);
-    new weapon = ReadPackCell(data);
-    CloseHandle(data);
+public Action Timer_FastSwitch(Handle timer, any dp) {
+    DataPack data = view_as<DataPack>(dp);
+    data.Reset();
+    int client = data.ReadCell();
+    int weapon = data.ReadCell();
+    delete data;
 
     if (client && IsClientInGame(client) && IsPlayerAlive(client) && weapon && IsValidEdict(weapon)) {
         UTIL_FastSwitch(client, weapon, false);
     }
+    return Plugin_Stop;
 }
 
-public Action:Event_KillCommand(client, const String:command[], argc) {
+public Action Event_KillCommand(int client, const char[] command, int argc) {
     return Plugin_Handled;
 }
 
-public Action:OnGetGameDescription(String:gameDesc[64]) {
+public Action OnGetGameDescription(char gameDesc[64]) {
     if ( !g_CfgGameDesc[0] ) {
         return Plugin_Continue;
     }
@@ -855,20 +859,18 @@ public Action:OnGetGameDescription(String:gameDesc[64]) {
     return Plugin_Changed;
 }
 
-public Event_CvarChanged(Handle:cvar, const String:oldValue[], const String:newValue[]) {
-    if ( cvar == g_Cvar_Turbo ) {
-        TurboMode = GetConVarBool(g_Cvar_Turbo);
-        return;
-    } else if ( cvar == g_Cvar_MultiLevelAmount ) {
-        g_Cfg_MultiLevelAmount = GetConVarInt(g_Cvar_MultiLevelAmount);
-        if ( g_Cfg_MultiLevelAmount < 0 ) {
-            g_Cfg_MultiLevelAmount = 1;
-        }
-        return;
+public void ConVarChanged_Turbo(ConVar cvar, const char[] oldValue, const char[] newValue) {
+    TurboMode = cvar.BoolValue;
+}
+
+public void ConVarChanged_MultiLevelAmount(ConVar cvar, const char[] oldValue, const char[] newValue) {
+    g_Cfg_MultiLevelAmount = cvar.IntValue;
+    if ( g_Cfg_MultiLevelAmount < 0 ) {
+        g_Cfg_MultiLevelAmount = 1;
     }
 }
 
-public Action:CS_OnCSWeaponDrop(client, weapon) {
+public Action CS_OnCSWeaponDrop(int client, int weapon) {
     if (!IsActive) {
         return Plugin_Continue;
     }
@@ -876,10 +878,10 @@ public Action:CS_OnCSWeaponDrop(client, weapon) {
         // do not allow drop weapon
         return Plugin_Stop;
     } else if (StripDeadPlayersWeapon == 2) {
-        new Handle:data = CreateDataPack();
-        WritePackCell(data, client);
-        WritePackCell(data, weapon);
-        
+        DataPack data = new DataPack();
+        data.WriteCell(client);
+        data.WriteCell(weapon);
+
         CreateTimer(0.1, Timer_RemoveDroppedWeapon, data);
         // allow drop weapon
         return Plugin_Continue;
@@ -889,21 +891,22 @@ public Action:CS_OnCSWeaponDrop(client, weapon) {
     }
 }
 
-public Action:Timer_RemoveDroppedWeapon(Handle:timer, any:data) {
-    new client, weapon;
+public Action Timer_RemoveDroppedWeapon(Handle timer, any dp) {
+    DataPack data = view_as<DataPack>(dp);
+    int client, weapon;
 
-    ResetPack(data);
-    client = ReadPackCell(data);
-    weapon = ReadPackCell(data);
-    CloseHandle(data);
-    
+    data.Reset();
+    client = data.ReadCell();
+    weapon = data.ReadCell();
+    delete data;
+
     if (!IsValidEntity(weapon) || !IsValidEdict(weapon)) {
         // entity is invalid
         return Plugin_Handled;
     }
     // entity is valid
 
-    new parent = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+    int parent = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
     if (parent > 0) {
         // weapon is owned by someone
         return Plugin_Handled;
@@ -911,7 +914,7 @@ public Action:Timer_RemoveDroppedWeapon(Handle:timer, any:data) {
     // weapon is not owned by someone
 
     if (IsClientInGame(client) && IsPlayerAlive(client)) {
-        if ((g_GameName == GameName:Csgo)
+        if ((g_GameName == Csgo)
             && UTIL_IsWeaponTaser(weapon)
             && UTIL_IsTaserEmpty(weapon)
         ) {

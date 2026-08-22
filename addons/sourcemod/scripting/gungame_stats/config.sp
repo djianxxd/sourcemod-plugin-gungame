@@ -1,4 +1,4 @@
-public GG_ConfigNewSection(const String:NewSection[])
+public void GG_ConfigNewSection(const char[] NewSection)
 {
     if ( strcmp(NewSection, "Config", false) == 0 )
     {
@@ -6,7 +6,7 @@ public GG_ConfigNewSection(const String:NewSection[])
     }
 }
 
-public GG_ConfigKeyValue(const String:Key[], const String:Value[])
+public void GG_ConfigKeyValue(const char[] Key, const char[] Value)
 {
     if ( ConfigState == CONFIG_STATE_CONFIG )
     {
@@ -15,13 +15,12 @@ public GG_ConfigKeyValue(const String:Key[], const String:Value[])
         } else if ( strcmp(Key, "HandicapTopRank", false) == 0 ) {
             g_cfgHandicapTopRank = StringToInt(Value);
         } else if ( strcmp(Key, "DontAddWinsOnBot", false) == 0 ) {
-            g_Cfg_DontAddWinsOnBot = bool:StringToInt(Value);
+            g_Cfg_DontAddWinsOnBot = view_as<bool>(StringToInt(Value));
         }
     }
 }
 
-public GG_ConfigParseEnd()
+public void GG_ConfigParseEnd()
 {
     ConfigState = CONFIG_STATE_NONE;
 }
-

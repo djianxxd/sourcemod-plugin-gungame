@@ -1,10 +1,15 @@
-new String:hexchars[] = "0123456789ABCDEF";
+#if defined _url_included_
+  #endinput
+#endif
+#define _url_included_
 
-url_encode(String:strFrom[], lenFrom, String:strTo[], lenTo)
+static const char HEXCHARS[17] = "0123456789ABCDEF";
+
+void url_encode(const char[] strFrom, int lenFrom, char[] strTo, int lenTo)
 {
-    new c;
-    new to = 0, from = 0;
-    decl String:strTmp[lenFrom*3+1];
+    int c;
+    int to = 0, from = 0;
+    char[] strTmp = new char[lenFrom*3+1];
 
     while ( from < lenFrom ) {
         c = strFrom[from++];
@@ -16,11 +21,10 @@ url_encode(String:strFrom[], lenFrom, String:strTo[], lenTo)
             strTmp[to++] = c;
         } else {
             strTmp[to++] = '%';
-            strTmp[to++] = hexchars[c >> 4];
-            strTmp[to++] = hexchars[c & 15];
+            strTmp[to++] = HEXCHARS[c >> 4];
+            strTmp[to++] = HEXCHARS[c & 15];
         }
     }
     strTmp[to] = '\0';
     strcopy(strTo, lenTo, strTmp);
 }
-

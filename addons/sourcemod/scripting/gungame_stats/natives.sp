@@ -1,4 +1,4 @@
-OnCreateNatives()
+void OnCreateNatives()
 {
     CreateNative("GG_DisplayTop", __DisplayTop);
     CreateNative("GG_GetClientWins", __GetPlayerWins);
@@ -9,9 +9,9 @@ OnCreateNatives()
     CreateNative("GG_ShowRank", __ShowRank);
 }
 
-public __DisplayTop(Handle:plugin, numParams)
+public int __DisplayTop(Handle plugin, int numParams)
 {
-    new client = GetNativeCell(1);
+    int client = GetNativeCell(1);
 
     if(client < 1 || client > MaxClients)
     {
@@ -24,9 +24,9 @@ public __DisplayTop(Handle:plugin, numParams)
     return 1;
 }
 
-public __ShowRank(Handle:plugin, numParams)
+public int __ShowRank(Handle plugin, int numParams)
 {
-    new client = GetNativeCell(1);
+    int client = GetNativeCell(1);
 
     if(client < 1 || client > MaxClients)
     {
@@ -39,9 +39,9 @@ public __ShowRank(Handle:plugin, numParams)
     return 1;
 }
 
-public __GetPlayerPlaceInStat(Handle:plugin, numParams)
+public int __GetPlayerPlaceInStat(Handle plugin, int numParams)
 {
-    new client = GetNativeCell(1);
+    int client = GetNativeCell(1);
 
     if(client < 1 || client > MaxClients)
     {
@@ -53,14 +53,14 @@ public __GetPlayerPlaceInStat(Handle:plugin, numParams)
     return GetPlayerPlaceInStat(client);
 }
 
-public __CountPlayersInStat(Handle:plugin, numParams)
+public int __CountPlayersInStat(Handle plugin, int numParams)
 {
     return CountPlayersInStat();
 }
 
-public __GetPlayerWins(Handle:plugin, numParams)
+public int __GetPlayerWins(Handle plugin, int numParams)
 {
-    new client = GetNativeCell(1);
+    int client = GetNativeCell(1);
 
     if(client < 1 || client > MaxClients)
     {
@@ -72,9 +72,9 @@ public __GetPlayerWins(Handle:plugin, numParams)
     return PlayerWinsData[client];
 }
 
-public __IsPlayerInTopRank(Handle:plugin, numParams)
+public int __IsPlayerInTopRank(Handle plugin, int numParams)
 {
-    new client = GetNativeCell(1);
+    int client = GetNativeCell(1);
 
     if(client < 1 || client > MaxClients)
     {
@@ -86,9 +86,9 @@ public __IsPlayerInTopRank(Handle:plugin, numParams)
     return IsPlayerInTopRank(client);
 }
 
-public __IsPlayerWinsLoaded(Handle:plugin, numParams)
+public int __IsPlayerWinsLoaded(Handle plugin, int numParams)
 {
-    new client = GetNativeCell(1);
+    int client = GetNativeCell(1);
 
     if(client < 1 || client > MaxClients)
     {
@@ -99,4 +99,3 @@ public __IsPlayerWinsLoaded(Handle:plugin, numParams)
 
     return g_PlayerWinsLoaded[client];
 }
-

@@ -1,2 +1,1 @@
-new ClientOnPage[MAXPLAYERS + 1] = {0, ...};
-
+int ClientOnPage[MAXPLAYERS + 1] = {0, ...};

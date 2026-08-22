@@ -1,5 +1,5 @@
-new const String:DATE[] = __DATE__;
-new const String:TIME[] = __TIME__;
+#define DATE __DATE__
+#define TIME __TIME__
 
 /* PlayerState[client] */
 #define KNIFE_ELITE         (1<<0)
@@ -22,68 +22,68 @@ enum Sounds
     MaxSounds
 }
 
-new String:g_WeaponName[MAX_WEAPONS_COUNT][MAX_WEAPON_NAME_LEN];
-new Slots:g_WeaponSlot[MAX_WEAPONS_COUNT];
-new g_WeaponAmmo[MAX_WEAPONS_COUNT];
-new bool:g_WeaponDropKnife[MAX_WEAPONS_COUNT];
-new g_WeaponLevelIndex[MAX_WEAPONS_COUNT];
+char g_WeaponName[MAX_WEAPONS_COUNT][MAX_WEAPON_NAME_LEN];
+Slots g_WeaponSlot[MAX_WEAPONS_COUNT];
+int g_WeaponAmmo[MAX_WEAPONS_COUNT];
+bool g_WeaponDropKnife[MAX_WEAPONS_COUNT];
+int g_WeaponLevelIndex[MAX_WEAPONS_COUNT];
 
-new String:EventSounds[Sounds:MaxSounds][PLATFORM_MAX_PATH];
+char EventSounds[MaxSounds][PLATFORM_MAX_PATH];
 
 /* Default values for weapon order.*/
-new WeaponOrderId[GUNGAME_MAX_LEVEL];
-new String:WeaponOrderName[GUNGAME_MAX_LEVEL][24];
-new WeaponOrderCount;
-new RandomWeaponOrderMap[GUNGAME_MAX_LEVEL];
-new bool:RandomWeaponOrder;
+int WeaponOrderId[GUNGAME_MAX_LEVEL];
+char WeaponOrderName[GUNGAME_MAX_LEVEL][24];
+int WeaponOrderCount;
+int RandomWeaponOrderMap[GUNGAME_MAX_LEVEL];
+bool RandomWeaponOrder;
 
 // ConVar Pointer
-new Handle:mp_friendlyfire = INVALID_HANDLE;
-new Handle:mp_restartgame = INVALID_HANDLE;
-new Handle:gungame_enabled = INVALID_HANDLE;
+ConVar mp_friendlyfire = null;
+ConVar mp_restartgame = null;
+ConVar gungame_enabled = null;
 
 /* Status forwards */
-new Handle:FwdLevelChange = INVALID_HANDLE;
-new Handle:FwdWarmupEnd = INVALID_HANDLE;
-new Handle:FwdWarmupStart = INVALID_HANDLE;
-new Handle:FwdWinner = INVALID_HANDLE;
-new Handle:FwdSoundWinner = INVALID_HANDLE;
-new Handle:FwdTripleLevel = INVALID_HANDLE;
-new Handle:FwdLeader = INVALID_HANDLE;
-new Handle:FwdVoteStart = INVALID_HANDLE;
-new Handle:FwdDisableRtv = INVALID_HANDLE;
-new Handle:FwdDeath = INVALID_HANDLE;
-new Handle:FwdPoint = INVALID_HANDLE;
-new Handle:FwdStart = INVALID_HANDLE;
-new Handle:FwdShutdown = INVALID_HANDLE;
+GlobalForward FwdLevelChange = null;
+GlobalForward FwdWarmupEnd = null;
+GlobalForward FwdWarmupStart = null;
+GlobalForward FwdWinner = null;
+GlobalForward FwdSoundWinner = null;
+GlobalForward FwdTripleLevel = null;
+GlobalForward FwdLeader = null;
+GlobalForward FwdVoteStart = null;
+GlobalForward FwdDisableRtv = null;
+GlobalForward FwdDeath = null;
+GlobalForward FwdPoint = null;
+GlobalForward FwdStart = null;
+GlobalForward FwdShutdown = null;
 
-new Handle:WarmupTimer = INVALID_HANDLE;
+Handle WarmupTimer = null;
 
-new bool:IsActive = false;
-new bool:IsObjectiveHooked;
-new HostageEntInfo;
-new Handle:PlayerLevelsBeforeDisconnect = INVALID_HANDLE;
-new Handle:g_Timer_HandicapUpdate = INVALID_HANDLE;
-new Handle:PlayerHandicapTimes = INVALID_HANDLE;
-new bool:g_SkipSpawn[MAXPLAYERS+1] = {false, ...};
+bool IsActive = false;
+bool IsObjectiveHooked;
+int HostageEntInfo;
+StringMap PlayerLevelsBeforeDisconnect = null;
+Handle g_Timer_HandicapUpdate = null;
+StringMap PlayerHandicapTimes = null;
+bool g_SkipSpawn[MAXPLAYERS+1] = {false, ...};
 
-new GameName:g_GameName = GameName:None;
-new g_WeaponsMaxId              = 0;
+GameName g_GameName = None;
+int g_WeaponsMaxId              = 0;
 
-new g_WeaponIdKnife             = 0;
-new g_WeaponIdHegrenade         = 0;
-new g_WeaponIdSmokegrenade      = 0;
-new g_WeaponIdFlashbang         = 0;
-new g_WeaponIdTaser             = 0;
+int g_WeaponIdKnife             = 0;
+int g_WeaponIdHegrenade         = 0;
+int g_WeaponIdSmokegrenade      = 0;
+int g_WeaponIdFlashbang         = 0;
+int g_WeaponIdTaser             = 0;
 
-new g_WeaponLevelIdKnife        = 0;
-new g_WeaponLevelIdHegrenade    = 0;
-new g_WeaponLevelIdTaser        = 0;
-new g_WeaponLevelIdMolotov      = 0;
+int g_WeaponLevelIdKnife        = 0;
+int g_WeaponLevelIdHegrenade    = 0;
+int g_WeaponLevelIdTaser        = 0;
+int g_WeaponLevelIdMolotov      = 0;
 
-new g_WeaponAmmoTypeHegrenade       = 0;
-new g_WeaponAmmoTypeFlashbang       = 0;
-new g_WeaponAmmoTypeSmokegrenade    = 0;
-new g_WeaponAmmoTypeMolotov         = 0;
-new g_WeaponAmmoTypeTaser           = 0;
-new bool:g_BlockFastSwitchOnChange[MAXPLAYERS+1]    = {false, ...};
+int g_WeaponAmmoTypeHegrenade       = 0;
+int g_WeaponAmmoTypeFlashbang       = 0;
+int g_WeaponAmmoTypeSmokegrenade    = 0;
+int g_WeaponAmmoTypeMolotov         = 0;
+int g_WeaponAmmoTypeTaser           = 0;
+bool g_BlockFastSwitchOnChange[MAXPLAYERS+1]    = {false, ...};

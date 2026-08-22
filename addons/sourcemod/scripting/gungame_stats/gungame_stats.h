@@ -2,18 +2,17 @@
  * Top rank and player data will sync after map change.
  */
 
-new bool:SaveProcess;
+bool SaveProcess;
 
 /* Player Data */
-new PlayerWinsData[MAXPLAYERS + 1] = {0, ...};
-new bool:IsActive;
+int PlayerWinsData[MAXPLAYERS + 1] = {0, ...};
+bool IsActive;
 
-new PlayerPlaceData[MAXPLAYERS + 1] = {0, ...};
-new TotalWinners = 0;
+int PlayerPlaceData[MAXPLAYERS + 1] = {0, ...};
+int TotalWinners = 0;
 
-new Handle:FwdLoadRank = INVALID_HANDLE;
-new Handle:FwdLoadPlayerWins = INVALID_HANDLE;
-new g_cfgHandicapTopWins = 0;
+GlobalForward FwdLoadRank = null;
+GlobalForward FwdLoadPlayerWins = null;
+int g_cfgHandicapTopWins = 0;
 
-new bool:g_PlayerWinsLoaded[MAXPLAYERS + 1] = {false, ...};
-
+bool g_PlayerWinsLoaded[MAXPLAYERS + 1] = {false, ...};

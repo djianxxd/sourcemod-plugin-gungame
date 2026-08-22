@@ -4,11 +4,13 @@
 #include <gungame_const>
 #include <gungame>
 
+#pragma newdecls required
+
 /**
  * This is a plugin for hlstatx logging of the winner of the gungame current level.
  */
 
-public Plugin:myinfo = {
+public Plugin myinfo = {
     name = "GunGame:SM Winner Logger",
     author = GUNGAME_AUTHOR,
     description = "Logging of winner for external stats plugin",
@@ -16,14 +18,14 @@ public Plugin:myinfo = {
     url = GUNGAME_URL
 };
 
-public GG_OnWinner(client, const String:Weapon[], victim) {
+public void GG_OnWinner(int client, const char[] Weapon, int victim) {
     LogEventToGame("gg_win", client);
     LogEventToGame("gg_lose", victim);
 
-    new teamWin = GetClientTeam(client);
-    new teamLose = (teamWin == TEAM_CT)? TEAM_T: TEAM_CT;
-    new team;
-    for (new i = 1; i <= MaxClients; i++) {
+    int teamWin = GetClientTeam(client);
+    int teamLose = (teamWin == TEAM_CT)? TEAM_T: TEAM_CT;
+    int team;
+    for (int i = 1; i <= MaxClients; i++) {
         if (IsClientInGame(i)) {
             team = GetClientTeam(i);
             if (team == teamWin) {
@@ -35,19 +37,19 @@ public GG_OnWinner(client, const String:Weapon[], victim) {
     }
 }
 
-public GG_OnTripleLevel(client) {
+public void GG_OnTripleLevel(int client) {
     LogEventToGame("gg_triple_level", client);
 }
 
-public GG_OnLeaderChange(client, level, totalLevels) {
+public void GG_OnLeaderChange(int client, int level, int totalLevels) {
     if (client && IsClientInGame(client)) {
         LogEventToGame("gg_leader", client);
     }
 }
 
-public Action:GG_OnClientLevelChange(client, level, difference, bool:steal, bool:last, bool:knife) {
+public Action GG_OnClientLevelChange(int client, int level, int difference, bool steal, bool last, bool knife) {
     if (!difference) {
-        return;
+        return Plugin_Continue;
     }
     if (difference > 0) {
         LogEventToGame("gg_levelup", client);
@@ -62,20 +64,21 @@ public Action:GG_OnClientLevelChange(client, level, difference, bool:steal, bool
         }
     } else {
         LogEventToGame("gg_leveldown", client);
-        for (new i = difference; i < 0; i++) {
+        for (int i = difference; i < 0; i++) {
             LogEventToGame("gg_leveldown", client);
         }
     }
+
+    return Plugin_Continue;
 }
 
-LogEventToGame(const String:event[], client) {
-    decl String:Auth[64];
+void LogEventToGame(const char[] event, int client) {
+    char Auth[64];
 
-    GetClientAuthString(client, Auth, sizeof(Auth));
-    if (!GetClientAuthString(client, Auth, sizeof(Auth))) {
+    if (!GetClientAuthId(client, AuthId_Steam2, Auth, sizeof(Auth))) {
         strcopy(Auth, sizeof(Auth), "UNKNOWN");
     }
 
-    new team = GetClientTeam(client), UserId = GetClientUserId(client);
+    int team = GetClientTeam(client), UserId = GetClientUserId(client);
     LogToGame("\"%N<%d><%s><%s>\" triggered \"%s\"", client, UserId, Auth, (team == TEAM_T) ? "TERRORIST" : "CT", event);
 }

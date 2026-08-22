@@ -5,6 +5,8 @@
 #include <gungame_config>
 #include "gungame/stock.sp"
 
+#pragma newdecls required
+
 /**
  * Do map specific config
  * make sure to do partial name config
@@ -21,7 +23,7 @@
  * then map specifc config files will be loaded.
  */
 
-public Plugin:myinfo =
+public Plugin myinfo =
 {
     name = "GunGame:SM Config Reader",
     author = GUNGAME_AUTHOR,
@@ -30,76 +32,76 @@ public Plugin:myinfo =
     url = GUNGAME_URL
 };
 
-new Handle:ConfigParser = INVALID_HANDLE;
-new ConfigCount;
-new ParseConfigCount;
+SMCParser ConfigParser;
+int ConfigCount;
+int ParseConfigCount;
 
-new Handle:FwdConfigNewSection = INVALID_HANDLE;
-new Handle:FwdConfigKeyValue = INVALID_HANDLE;
-new Handle:FwdConfigParseEnd = INVALID_HANDLE;
-new Handle:FwdConfigEnd = INVALID_HANDLE;
+GlobalForward FwdConfigNewSection;
+GlobalForward FwdConfigKeyValue;
+GlobalForward FwdConfigParseEnd;
+GlobalForward FwdConfigEnd;
 
-new Handle:g_Cvar_CfgDirName = INVALID_HANDLE;
+ConVar g_Cvar_CfgDirName;
 
-new GameName:g_GameName = GameName:None;
-new String:ConfigGameDirName[PLATFORM_MAX_PATH];
+GameName g_GameName = None;
+char ConfigGameDirName[PLATFORM_MAX_PATH];
 
-public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
     RegPluginLibrary("gungame_cfg");
     CreateNative("GG_ConfigGetDir", Native_GG_ConfigGetDir);
     return APLRes_Success;
 }
 
-public Native_GG_ConfigGetDir(Handle:plugin, numParams) {
+public int Native_GG_ConfigGetDir(Handle plugin, int numParams) {
     SetNativeString(1, ConfigGameDirName, GetNativeCell(2));
     return 1;
 }
 
-public OnPluginStart() {
+public void OnPluginStart() {
     g_GameName = DetectGame();
-    if (g_GameName == GameName:None) {
+    if (g_GameName == None) {
         SetFailState("ERROR: Unsupported game. Please contact the author.");
     }
 
     FwdConfigNewSection = CreateGlobalForward("GG_ConfigNewSection", ET_Ignore, Param_String);
     FwdConfigKeyValue = CreateGlobalForward("GG_ConfigKeyValue", ET_Ignore, Param_String, Param_String);
-    FwdConfigParseEnd = CreateGlobalForward("GG_COnfigParseEnd", ET_Ignore);
+    FwdConfigParseEnd = CreateGlobalForward("GG_ConfigParseEnd", ET_Ignore);
     FwdConfigEnd = CreateGlobalForward("GG_ConfigEnd", ET_Ignore);
     g_Cvar_CfgDirName = CreateConVar("sm_gg_cfgdirname", "gungame", "Config directory for gungame (from cfg path)");
 }
 
-public OnConfigsExecuted() {
+public void OnConfigsExecuted() {
     ReadConfig();
 }
 
-ReadConfig()
+void ReadConfig()
 {
     ConfigParser = SMC_CreateParser();
 
     SMC_SetParseEnd(ConfigParser, ReadConfig_ParseEnd);
     SMC_SetReaders(ConfigParser, ReadConfig_NewSection, ReadConfig_KeyValue, ReadConfig_EndSection);
 
-    if (ConfigParser == INVALID_HANDLE)
+    if (ConfigParser == null)
     {
         return;
     }
-    
-    decl String:ConfigDirName[PLATFORM_MAX_PATH];
-    GetConVarString(g_Cvar_CfgDirName, ConfigDirName, sizeof(ConfigDirName));
 
-    if (g_GameName == GameName:Css) {
+    char ConfigDirName[PLATFORM_MAX_PATH];
+    g_Cvar_CfgDirName.GetString(ConfigDirName, sizeof(ConfigDirName));
+
+    if (g_GameName == Css) {
         FormatEx(ConfigGameDirName, sizeof(ConfigGameDirName), "%s\\css", ConfigDirName);
-    } else if (g_GameName == GameName:Csgo) {
+    } else if (g_GameName == Csgo) {
         FormatEx(ConfigGameDirName, sizeof(ConfigGameDirName), "%s\\csgo", ConfigDirName);
     }
 
-    decl String:ConfigDir[PLATFORM_MAX_PATH];
+    char ConfigDir[PLATFORM_MAX_PATH];
     FormatEx(ConfigDir, sizeof(ConfigDir), "cfg\\%s", ConfigGameDirName);
 
-    decl String:ConfigFile[PLATFORM_MAX_PATH], String:EquipFile[PLATFORM_MAX_PATH];
-    decl String:Error[PLATFORM_MAX_PATH + 64];
-    
+    char ConfigFile[PLATFORM_MAX_PATH], EquipFile[PLATFORM_MAX_PATH];
+    char Error[PLATFORM_MAX_PATH + 64];
+
     FormatEx(ConfigFile, sizeof(ConfigFile), "%s\\gungame.config.txt", ConfigDir);
 
     if(FileExists(ConfigFile))
@@ -108,40 +110,40 @@ ReadConfig()
         PrintToServer("[GunGame] Loading gungame.config.txt config file");
     } else {
         FormatEx(Error, sizeof(Error), "[GunGame] FATAL *** ERROR *** can not find %s", ConfigFile);
-        SetFailState(Error);
+        SetFailState("%s", Error);
     }
-    
+
     FormatEx(EquipFile, sizeof(EquipFile), "%s\\gungame.equip.txt", ConfigDir);
-    
+
     if(FileExists(EquipFile))
     {
         ConfigCount++;
         PrintToServer("[GunGame] Loading gungame.equip.txt config file");
     } else {
         FormatEx(Error, sizeof(Error), "[GunGame] FATAL *** ERROR *** can not find %s", EquipFile);
-        SetFailState(Error);
+        SetFailState("%s", Error);
     }
-    
+
     /* Build map config and map prefix config*/
-    
+
     /**
      * Thanks sawce for the idea from your prefix map plugin loading for AMX Mod X
      * saved me alot of time doing it this way.
      *
      */
 
-    decl String:Map[32];
-    new len = GetCurrentMap(Map, sizeof(Map));
-    
-    new i, b;
+    char Map[32];
+    int len = GetCurrentMap(Map, sizeof(Map));
+
+    int i, b;
     while(Map[i] != '_' && Map[i] != '\0' && i < len)
     {
         i++;
     }
 
-    decl String:PrefixConfigFile[PLATFORM_MAX_PATH],  String:PrefixEquipFile[PLATFORM_MAX_PATH];
-    new bool:EquipOne, bool:ConfigOne;
-    
+    char PrefixConfigFile[PLATFORM_MAX_PATH], PrefixEquipFile[PLATFORM_MAX_PATH];
+    bool EquipOne, ConfigOne;
+
     if(Map[i] == '_')
     {
         b = Map[i];
@@ -156,7 +158,7 @@ ReadConfig()
             PrintToServer("[GunGame] Loading %s.config.txt config file", Map);
             ConfigCount++;
         }
-        
+
         if(FileExists(PrefixEquipFile))
         {
             EquipOne = true;
@@ -167,9 +169,9 @@ ReadConfig()
         Map[i] = b;
     }
 
-    decl String:MapEquipFile[PLATFORM_MAX_PATH], String:MapConfigFile[PLATFORM_MAX_PATH];
-    new bool:EquipTwo, bool:ConfigTwo;
-    
+    char MapEquipFile[PLATFORM_MAX_PATH], MapConfigFile[PLATFORM_MAX_PATH];
+    bool EquipTwo, ConfigTwo;
+
     FormatEx(MapConfigFile, sizeof(MapConfigFile), "%s\\maps\\%s.config.txt", ConfigDir, Map);
     FormatEx(MapEquipFile, sizeof(MapEquipFile), "%s\\maps\\%s.equip.txt", ConfigDir, Map);
 
@@ -179,46 +181,46 @@ ReadConfig()
         ConfigTwo = true;
         ConfigCount++;
     }
-    
+
     if(FileExists(MapEquipFile))
     {
         PrintToServer("[GunGame] Loading %s.equip.txt file", Map);
         EquipTwo = true;
         ConfigCount++;
     }
-    
+
     InternalReadConfig(ConfigFile);
     InternalReadConfig(EquipFile);
-    
+
     if(ConfigOne)
     {
         InternalReadConfig(PrefixConfigFile);
     }
-    
+
     if(EquipOne)
     {
         InternalReadConfig(PrefixEquipFile);
     }
-    
+
     if(ConfigTwo)
     {
         InternalReadConfig(MapConfigFile);
     }
-    
+
     if(EquipTwo)
     {
         InternalReadConfig(MapEquipFile);
     }
 }
 
-static InternalReadConfig(const String:path[])
+static void InternalReadConfig(const char[] path)
 {
-    new SMCError:err = SMC_ParseFile(ConfigParser, path);
+    SMCError err = ConfigParser.ParseFile(path);
 
     if (err != SMCError_Okay)
     {
-        decl String:buffer[64];
-        if (SMC_GetErrorString(err, buffer, sizeof(buffer)))
+        char buffer[64];
+        if (ConfigParser.GetErrorString(err, buffer, sizeof(buffer)))
         {
             PrintToServer("%s", buffer);
         } else {
@@ -227,7 +229,7 @@ static InternalReadConfig(const String:path[])
     }
 }
 
-public SMCResult:ReadConfig_NewSection(Handle:smc, const String:name[], bool:opt_quotes)
+public SMCResult ReadConfig_NewSection(SMCParser smc, const char[] name, bool opt_quotes)
 {
     if(name[0])
     {
@@ -239,11 +241,11 @@ public SMCResult:ReadConfig_NewSection(Handle:smc, const String:name[], bool:opt
     return SMCParse_Continue;
 }
 
-public SMCResult:ReadConfig_KeyValue(Handle:smc,
-                                        const String:key[],
-                                        const String:value[],
-                                        bool:key_quotes,
-                                        bool:value_quotes)
+public SMCResult ReadConfig_KeyValue(SMCParser smc,
+                                        const char[] key,
+                                        const char[] value,
+                                        bool key_quotes,
+                                        bool value_quotes)
 {
     /**
      * Is this check really even neccessary?
@@ -260,16 +262,16 @@ public SMCResult:ReadConfig_KeyValue(Handle:smc,
     return SMCParse_Continue;
 }
 
-public SMCResult:ReadConfig_EndSection(Handle:smc)
+public SMCResult ReadConfig_EndSection(SMCParser smc)
 {
     return SMCParse_Continue;
 }
 
-public ReadConfig_ParseEnd(Handle:smc, bool:halted, bool:failed)
+public void ReadConfig_ParseEnd(SMCParser smc, bool halted, bool failed)
 {
     Call_StartForward(FwdConfigParseEnd);
     Call_Finish();
-    
+
     if(ConfigCount == ++ParseConfigCount)
     {
         Call_StartForward(FwdConfigEnd);

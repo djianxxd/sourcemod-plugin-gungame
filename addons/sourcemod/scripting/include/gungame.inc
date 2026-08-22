@@ -13,7 +13,7 @@
  * @param Command       True if gungame was enabled by command.
  * @noreturn
  */
-forward GG_OnStartup(bool:Command);
+forward void GG_OnStartup(bool Command);
 
 /**
  * Called when gungame is disabled.
@@ -21,20 +21,20 @@ forward GG_OnStartup(bool:Command);
  * @param Command       True if gungame was disabled by command.
  * @noreturn
  */
-forward GG_OnShutdown(bool:Command);
+forward void GG_OnShutdown(bool Command);
 
 /**
  * Called when the player level changed.
  *
  * @param client        Player index.
- * @param level     Player current level (starting from 0). 
+ * @param level     Player current level (starting from 0).
  * @param difference    The difference in the level change.
  * @param steal     true if it was a knife steal otherwise false
  * @param last      true if player reached last level.
  * @param knife     true if player reached knife level.
  * @return          Plugin_Handled; to stop the level change.
  */
-forward Action:GG_OnClientLevelChange(client, level, difference, bool:steal, bool:last, bool:knife);
+forward Action GG_OnClientLevelChange(int client, int level, int difference, bool steal, bool last, bool knife);
 
 /**
  * Called when the player point per level changed.
@@ -44,7 +44,7 @@ forward Action:GG_OnClientLevelChange(client, level, difference, bool:steal, boo
  * @param difference    The difference in point change.
  * @return          Plugin_Handled; to stop the level change.
  */
-forward Action:GG_OnClientPointChange(client, point, difference);
+forward Action GG_OnClientPointChange(int client, int point, int difference);
 
 /**
  * Called when a client won the game.
@@ -54,7 +54,7 @@ forward Action:GG_OnClientPointChange(client, point, difference);
  * @param victim        Player index of victim (or 0 if there was no victim).
  * @noreturn
  */
-forward GG_OnWinner(client, const String:Weapon[], victim);
+forward void GG_OnWinner(int client, const char[] Weapon, int victim);
 
 /**
  * Called when a client triple leveled.
@@ -62,21 +62,21 @@ forward GG_OnWinner(client, const String:Weapon[], victim);
  * @param client        Player index.
  * @noreturn
  */
-forward GG_OnTripleLevel(client);
+forward void GG_OnTripleLevel(int client);
 
 /**
  * Called when warmup has ended.
  *
  * @noreturn
  */
-forward GG_OnWarmupEnd();
+forward void GG_OnWarmupEnd();
 
 /**
  * Called when warmup has started.
  *
  * @noreturn
  */
-forward GG_OnWarmupStart();
+forward void GG_OnWarmupStart();
 
 /**
  * Called when the leader change player.
@@ -86,7 +86,7 @@ forward GG_OnWarmupStart();
  * @param totalLevels   Total number of levels (max level from config)
  * @noreturn
  */
-forward GG_OnLeaderChange(client, level, totalLevels);
+forward void GG_OnLeaderChange(int client, int level, int totalLevels);
 
 /**
  * Called when to start the map voting for next map
@@ -94,7 +94,7 @@ forward GG_OnLeaderChange(client, level, totalLevels);
  * @noparam
  * @noreturn
  */
-forward GG_OnStartMapVote();
+forward void GG_OnStartMapVote();
 
 /**
  * Called when a player died.
@@ -104,7 +104,7 @@ forward GG_OnStartMapVote();
  * @param WeaponId      The weapon index the player was killed with.
  * @param TeamKilled    True if they were killed by a team mate.
  */
-forward Action:GG_OnClientDeath(killer, victim, WeaponId, bool:TeamKilled);
+forward Action GG_OnClientDeath(int killer, int victim, int WeaponId, bool TeamKilled);
 
 /**
  * Called before winner sound starts to play.
@@ -112,20 +112,20 @@ forward Action:GG_OnClientDeath(killer, victim, WeaponId, bool:TeamKilled);
  * @param client    Winner's index.
  * @return          Plugin_Handled; to prevent winner sound to play.
  */
-forward Action:GG_OnSoundWinner(client);
+forward Action GG_OnSoundWinner(int client);
 
 /**
  * Gives the client the average/minimum level of all players in the server.
  *
- * Handicap mode: 
+ * Handicap mode:
  *    1 - Average level
  *    2 - Minimum level
  *
  * @param client        Player index.
- * @return              If level was set then return 1. 
+ * @return              If level was set then return 1.
  *                      0 - level was not changed.
  */
-native GG_GiveHandicapLevel(client);
+native int GG_GiveHandicapLevel(int client);
 
 /**
  * Get the player current level.
@@ -133,14 +133,14 @@ native GG_GiveHandicapLevel(client);
  * @param client        Player index
  * @return          The player current level (starting from 1).
  */
-native GG_GetClientLevel(client);
+native int GG_GetClientLevel(int client);
 
 /**
  * Retrieves the max level.
  *
  * @param return        The max level (starting from 1).
  */
-native GG_GetMaxLevel();
+native int GG_GetMaxLevel();
 
 /**
  * Add a level to the player current level.
@@ -149,7 +149,7 @@ native GG_GetMaxLevel();
  * @param client        Player index.
  * @return          The player current level.
  */
-native GG_AddALevel(client);
+native int GG_AddALevel(int client);
 
 /**
  * Remove a level from the player current level.
@@ -160,7 +160,7 @@ native GG_AddALevel(client);
  * @param client        Player index.
  * @return          The player current level.
  */
-native GG_RemoveALevel(client);
+native int GG_RemoveALevel(int client);
 
 /**
  * Remove multi levels from the player current level.
@@ -172,7 +172,7 @@ native GG_RemoveALevel(client);
  * @param loose         Levels to loose.
  * @return          The player current level.
  */
-native GG_RemoveLevelMulti(client, level);
+native int GG_RemoveLevelMulti(int client, int level);
 
 /**
  * Add a point to the player point per level.
@@ -183,7 +183,7 @@ native GG_RemoveLevelMulti(client, level);
  * @param client        Player index.
  * @return          The current player point per level or 0 if they leveled.
  */
-native GG_AddAPoint(client);
+native int GG_AddAPoint(int client);
 
 /**
  * Removes a point to the player point per level.
@@ -194,7 +194,7 @@ native GG_AddAPoint(client);
  * @param client        Player index.
  * @return          The current player point per level or GG_GetClientMaxPointLevel() - 1 if they lost a level.
  */
-native GG_RemoveAPoint(client);
+native int GG_RemoveAPoint(int client);
 
 /**
  * Retrieves the client current point per level.
@@ -202,7 +202,7 @@ native GG_RemoveAPoint(client);
  * @param client        Player index.
  * @return          The current player point per level.
  */
-native GG_GetClientPointLevel(client);
+native int GG_GetClientPointLevel(int client);
 
 /**
  * Retrieves the client max point per level.
@@ -210,7 +210,7 @@ native GG_GetClientPointLevel(client);
  * @param client        Player index.
  * @return          The player max point per level.
  */
-native GG_GetClientMaxPointLevel(client);
+native int GG_GetClientMaxPointLevel(int client);
 
 /**
  * Set the level weapon by weapon index.
@@ -219,7 +219,7 @@ native GG_GetClientMaxPointLevel(client);
  * @param weapon        The weapon index
  * @noreturn
  */
-native GG_SetWeaponLevel(level, weapon);
+native int GG_SetWeaponLevel(int level, int weapon);
 
 /**
  * Set the level weapon by weapon name.
@@ -227,7 +227,7 @@ native GG_SetWeaponLevel(level, weapon);
  * @param level     The weapon level (starting from 1)
  * @param weapon        The weapon name
  */
-native GG_SetWeaponLevelByName(level, const String:weapon[]);
+native int GG_SetWeaponLevelByName(int level, const char[] weapon);
 
 /**
  * Set the maximum level the player can achieve to win the game.
@@ -237,7 +237,7 @@ native GG_SetWeaponLevelByName(level, const String:weapon[]);
  * @error               If level is greater than the define maximum.
  *
  */
-native GG_SetMaxLevel(level);
+native int GG_SetMaxLevel(int level);
 
 /**
  * Retrieves the weapon index from weapon name.
@@ -245,7 +245,7 @@ native GG_SetMaxLevel(level);
  * @param weapon        The short weapon name. ie awp, glock.
  * @return          0 if weapon is not found or the weapon index.
  */
-native GG_GetWeaponIndex(const String:weapon[]);
+native int GG_GetWeaponIndex(const char[] weapon);
 
 /**
  * Get weapon name from level.
@@ -255,7 +255,7 @@ native GG_GetWeaponIndex(const String:weapon[]);
  * @param maxlength     Max length of weapon String.
  * @noreturn
  */
-native GG_GetLevelWeaponName(level, String:weapon[], maxlength);
+native int GG_GetLevelWeaponName(int level, char[] weapon, int maxlength);
 
 /**
  * Retrieves if warmup is in progress.
@@ -263,7 +263,7 @@ native GG_GetLevelWeaponName(level, String:weapon[], maxlength);
  * @noparam
  * @return          Return true if warmup is in progress otherwise false.
  */
-native bool:GG_IsWarmupInProgress();
+native bool GG_IsWarmupInProgress();
 
 /**
  * Return weapon id for knife weapon.
@@ -271,7 +271,7 @@ native bool:GG_IsWarmupInProgress();
  * @noparam
  * @return          Return weapon id for knife weapon.
  */
-native GG_GetWeaponIdKnife();
+native int GG_GetWeaponIdKnife();
 
 /**
  * Return true if weapon is knife.
@@ -279,7 +279,7 @@ native GG_GetWeaponIdKnife();
  * @param weaponId  The weapon id to ckeck.
  * @return          Return weapon id for knife weapon.
  */
-native bool:GG_IsWeaponKnife(weaponId);
+native bool GG_IsWeaponKnife(int weaponId);
 
 /**
  * Return weapon id for hegrenade weapon.
@@ -287,7 +287,7 @@ native bool:GG_IsWeaponKnife(weaponId);
  * @noparam
  * @return          Return weapon id for hegrenade weapon.
  */
-native GG_GetWeaponIdHegrenade();
+native int GG_GetWeaponIdHegrenade();
 
 /* Do not edit the code below. */
 public SharedPlugin:__pl_gungame =

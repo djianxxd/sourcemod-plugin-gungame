@@ -2,7 +2,7 @@
  * Menu
  */
 
-public CommandPanelHandler(Handle:menu, MenuAction:action, client, param2)
+public int CommandPanelHandler(Menu menu, MenuAction action, int client, int param2)
 {
     if (action == MenuAction_Select)
     {
@@ -16,7 +16,7 @@ public CommandPanelHandler(Handle:menu, MenuAction:action, client, param2)
                 ShowPlayerLevelMenu(client);
             case 4: /* !top */
             {
-                if ( StatsEnabled ) 
+                if ( StatsEnabled )
                 {
                     GG_DisplayTop(client); /* HINT: gungame_stats */
                 }
@@ -29,7 +29,7 @@ public CommandPanelHandler(Handle:menu, MenuAction:action, client, param2)
                 ShowLeaderMenu(client);
             case 6: /* !rank */
             {
-                if ( StatsEnabled ) 
+                if ( StatsEnabled )
                 {
                     GG_ShowRank(client); /* HINT: gungame_stats */
                 }
@@ -42,9 +42,10 @@ public CommandPanelHandler(Handle:menu, MenuAction:action, client, param2)
                 ShowRulesMenu(client);
         }
     }
+    return 0;
 }
 
-public ScoreCommandPanelHandler(Handle:menu, MenuAction:action, client, param2)
+public int ScoreCommandPanelHandler(Menu menu, MenuAction action, int client, int param2)
 {
     if (action == MenuAction_Select)
     {
@@ -52,7 +53,7 @@ public ScoreCommandPanelHandler(Handle:menu, MenuAction:action, client, param2)
         {
             case 2: /* !top */
             {
-                if ( StatsEnabled ) 
+                if ( StatsEnabled )
                 {
                     GG_DisplayTop(client); /* HINT: gungame_stats */
                 }
@@ -63,137 +64,139 @@ public ScoreCommandPanelHandler(Handle:menu, MenuAction:action, client, param2)
                 ShowPlayerLevelMenu(client);
         }
     }
+    return 0;
 }
 
-public EmptyPanelHandler(Handle:menu, MenuAction:action, param1, param2)
+public int EmptyPanelHandler(Menu menu, MenuAction action, int param1, int param2)
 {
     /* Don't care what they pressed. */
+    return 0;
 }
 
-CreateLevelPanel(client)
+void CreateLevelPanel(int client)
 {
     SetGlobalTransTarget(client);
-    decl String:text[256];
-    decl String:subtext[64];
+    char text[256];
+    char subtext[64];
 
-    new Handle:LevelPanel = CreatePanel();
+    Panel LevelPanel = new Panel();
     Format(text, sizeof(text), "%t", "LevelPanel: Level Information");
-    SetPanelTitle(LevelPanel, text);
-    DrawPanelItem(LevelPanel, BLANK, ITEMDRAW_SPACER|ITEMDRAW_RAWLINE);
+    LevelPanel.SetTitle(text);
+    LevelPanel.DrawItem(BLANK, ITEMDRAW_SPACER|ITEMDRAW_RAWLINE);
 
-    new Level = PlayerLevel[client], 
+    int Level = PlayerLevel[client],
         killsPerLevel = UTIL_GetCustomKillPerLevel(Level);
 
     Format(text, sizeof(text), "%t", "LevelPanel: Level");
-    DrawPanelItem(LevelPanel, text);
+    LevelPanel.DrawItem(text);
     Format(text, sizeof(text), "%t", "LevelPanel: You are on level",
         Level + 1, WeaponOrderName[Level], CurrentKillsPerWeap[client], killsPerLevel);
-    DrawPanelText(LevelPanel, text);
+    LevelPanel.DrawText(text);
 
     if ( CurrentLeader == client )
     {
         Format(text, sizeof(text), "%t", "LevelPanel: You are currently the leader");
-        DrawPanelText(LevelPanel, text);
-        DrawPanelText(LevelPanel, BLANK_SPACE);
+        LevelPanel.DrawText(text);
+        LevelPanel.DrawText(BLANK_SPACE);
     } else {
-        DrawPanelItem(LevelPanel, BLANK, ITEMDRAW_SPACER|ITEMDRAW_RAWLINE);
+        LevelPanel.DrawItem(BLANK, ITEMDRAW_SPACER|ITEMDRAW_RAWLINE);
     }
 
     Format(text, sizeof(text), "%t", "LevelPanel: Wins");
-    DrawPanelItem(LevelPanel, text);
+    LevelPanel.DrawItem(text);
 
     if ( StatsEnabled )
     {
-        FormatLanguageNumberTextEx(client, subtext, sizeof(subtext), 
+        FormatLanguageNumberTextEx(client, subtext, sizeof(subtext),
             GG_GetClientWins(client), /* HINT: gungame_stats */
             "times"
         );
         Format(text, sizeof(text), "%t", "LevelPanel: You have won times", subtext);
-        DrawPanelText(LevelPanel, text);
+        LevelPanel.DrawText(text);
     }
     else
     {
         Format(text, sizeof(text), "%t", "GunGame Stats is disabled");
         CRemoveTags(text, sizeof(text));
-        DrawPanelText(LevelPanel, text);
+        LevelPanel.DrawText(text);
     }
-    DrawPanelText(LevelPanel, BLANK_SPACE);
+    LevelPanel.DrawText(BLANK_SPACE);
 
     Format(text, sizeof(text), "%t", "LevelPanel: Leader");
-    DrawPanelItem(LevelPanel, text);
+    LevelPanel.DrawItem(text);
 
     if ( CurrentLeader && IsClientInGame(CurrentLeader) )
     {
-        new level = PlayerLevel[CurrentLeader];
+        int level = PlayerLevel[CurrentLeader];
 
         if ( level )
         {
-            decl String:Name[64];
+            char Name[64];
             GetClientName(CurrentLeader, Name, sizeof(Name));
             Format(text, sizeof(text), "%t", "LevelPanel: The current leader is on level", Name, level + 1, WeaponOrderName[level]);
-            DrawPanelText(LevelPanel, text);
+            LevelPanel.DrawText(text);
             if ( CurrentLeader != client )
             {
                 if ( level == Level )
                 {
                     Format(text, sizeof(text), "%t", "LevelPanel: You have tied with the leader");
-                    DrawPanelText(LevelPanel, text);
+                    LevelPanel.DrawText(text);
                 }
                 else if ( level > Level )
                 {
                     FormatLanguageNumberTextEx(client, subtext, sizeof(subtext), level - Level, "levels");
                     CRemoveTags(subtext, sizeof(subtext));
                     Format(text, sizeof(text), "%t", "LevelPanel: You are levels from the leader", subtext);
-                    DrawPanelText(LevelPanel, text);
+                    LevelPanel.DrawText(text);
                 }
             }
         } else {
             Format(text, sizeof(text), "%t", "LevelPanel: There is currently no leader");
-            DrawPanelText(LevelPanel, text);
+            LevelPanel.DrawText(text);
         }
     } else {
         Format(text, sizeof(text), "%t", "LevelPanel: There is currently no leader");
-        DrawPanelText(LevelPanel, text);
+        LevelPanel.DrawText(text);
     }
 
-    DrawPanelItem(LevelPanel, BLANK, ITEMDRAW_SPACER|ITEMDRAW_RAWLINE);
-    SetPanelCurrentKey(LevelPanel, 4);
+    LevelPanel.DrawItem(BLANK, ITEMDRAW_SPACER|ITEMDRAW_RAWLINE);
+    LevelPanel.CurrentKey = 4;
     Format(text, sizeof(text), "%t", "LevelPanel: Scores");
-    DrawPanelItem(LevelPanel, text, ITEMDRAW_CONTROL);
+    LevelPanel.DrawItem(text, ITEMDRAW_CONTROL);
     Format(text, sizeof(text), "%t", "LevelPanel: Press 4 to show scores");
-    DrawPanelText(LevelPanel, text);
-    
-    DrawPanelItem(LevelPanel, BLANK, ITEMDRAW_SPACER|ITEMDRAW_RAWLINE);
-    SetPanelCurrentKey(LevelPanel, 9);
-    Format(text, sizeof(text), "%t", "Panel: Exit");
-    DrawPanelItem(LevelPanel, text, ITEMDRAW_CONTROL);
+    LevelPanel.DrawText(text);
 
-    SendPanelToClient(LevelPanel, client, ScoreCommandPanelHandler, GUNGAME_MENU_TIME);
-    CloseHandle(LevelPanel);
+    LevelPanel.DrawItem(BLANK, ITEMDRAW_SPACER|ITEMDRAW_RAWLINE);
+    LevelPanel.CurrentKey = 9;
+    Format(text, sizeof(text), "%t", "Panel: Exit");
+    LevelPanel.DrawItem(text, ITEMDRAW_CONTROL);
+
+    LevelPanel.Send(client, ScoreCommandPanelHandler, GUNGAME_MENU_TIME);
+    delete LevelPanel;
 }
 
-ShowPlayerLevelMenu(client)
+void ShowPlayerLevelMenu(int client)
 {
     SetGlobalTransTarget(client);
-    decl String:text[256];
-    decl String:subtext[64];
+    char text[256];
+    char subtext[64];
 
-    new Handle:menu = CreateMenu(EmptyMenuHandler);
-    decl String:Name[64];
+    Menu menu = new Menu(EmptyMenuHandler);
+    char Name[64];
 
     Format(text, sizeof(text), "%t", "PlayersLevelPanel: Players level information");
-    SetMenuTitle(menu, text);
+    menu.SetTitle(text);
     SetGlobalTransTarget(client);
 
-    new counter = -1;
-    for ( new i = 1; i <= MaxClients; i++ )
+    int counter = -1;
+    for ( int i = 1; i <= MaxClients; i++ )
     {
         if ( IsClientInGame(i) )
         {
             GetClientName(i, Name, sizeof(Name));
             if ( StatsEnabled )
             {
-                FormatLanguageNumberTextEx(client, subtext, sizeof(subtext), 
+                FormatLanguageNumberTextEx(client, subtext, sizeof(subtext),
                     GG_GetClientWins(i), /* HINT: gungame_stats */
                     "wins"
                 );
@@ -203,200 +206,202 @@ ShowPlayerLevelMenu(client)
             {
                 Format(text, sizeof(text), "%t", "PlayersLevelPanel: Level Name", PlayerLevel[i] + 1, Name, WeaponOrderName[PlayerLevel[i]]);
             }
-            AddMenuItem(menu, BLANK, text, ++counter%7? ITEMDRAW_DISABLED: ITEMDRAW_DEFAULT);
+            menu.AddItem(BLANK, text, ++counter%7? ITEMDRAW_DISABLED: ITEMDRAW_DEFAULT);
         }
     }
 
-    DisplayMenu(menu, client, GUNGAME_MENU_TIME);
+    menu.Display(client, GUNGAME_MENU_TIME);
 }
 
-ShowLeaderMenu(client)
+void ShowLeaderMenu(int client)
 {
     SetGlobalTransTarget(client);
-    decl String:text[256];
+    char text[256];
 
-    new Handle:menu = CreateMenu(EmptyMenuHandler);
-    decl String:Name[64];
+    Menu menu = new Menu(EmptyMenuHandler);
+    char Name[64];
 
     if ( CurrentLeader ) {
         Format(text, sizeof(text), "%t%t", "LeaderMenu: Leaders", "LeaderMenu: Leader level and weapon", PlayerLevel[CurrentLeader] + 1, WeaponOrderName[PlayerLevel[CurrentLeader]]);
     } else {
         Format(text, sizeof(text), "%t", "LeaderMenu: Leaders");
     }
-    SetMenuTitle(menu, text);
+    menu.SetTitle(text);
     SetGlobalTransTarget(client);
 
-    new counter = -1;
+    int counter = -1;
     if ( CurrentLeader )
     {
-        new level = PlayerLevel[CurrentLeader];
-        for ( new i = 1; i <= MaxClients; i++ )
+        int level = PlayerLevel[CurrentLeader];
+        for ( int i = 1; i <= MaxClients; i++ )
         {
             if ( IsClientInGame(i) && PlayerLevel[i] == level )
             {
                 GetClientName(i, Name, sizeof(Name));
-                AddMenuItem(menu, BLANK, Name, ++counter%7? ITEMDRAW_DISABLED: ITEMDRAW_DEFAULT);
+                menu.AddItem(BLANK, Name, ++counter%7? ITEMDRAW_DISABLED: ITEMDRAW_DEFAULT);
             }
         }
     }
     else
     {
         Format(text, sizeof(text), "%t", "LeaderMenu: No leaders");
-        AddMenuItem(menu, BLANK, text, ++counter%7? ITEMDRAW_DISABLED: ITEMDRAW_DEFAULT);
+        menu.AddItem(BLANK, text, ++counter%7? ITEMDRAW_DISABLED: ITEMDRAW_DEFAULT);
     }
-        
-    DisplayMenu(menu, client, GUNGAME_MENU_TIME);
+
+    menu.Display(client, GUNGAME_MENU_TIME);
 }
 
-public EmptyMenuHandler(Handle:menu, MenuAction:action, param1, param2)
+public int EmptyMenuHandler(Menu menu, MenuAction action, int param1, int param2)
 {
     if ( action == MenuAction_End )
     {
-        CloseHandle(menu);
+        delete menu;
     }
+    return 0;
 }
 
 
 /* Move into a real menu */
-ShowJoinMsgPanel(client)
+void ShowJoinMsgPanel(int client)
 {
     SetGlobalTransTarget(client);
-    decl String:text[256];
-    new Handle:faluco = CreatePanel(), Count;
+    char text[256];
+    Panel faluco = new Panel();
+    int Count;
 
     Format(text, sizeof(text), "%t", "JoinPanel: This server is running the GunGame:SM");
-    SetPanelTitle(faluco, text);
-    DrawPanelText(faluco, BLANK_SPACE);
+    faluco.SetTitle(text);
+    faluco.DrawText(BLANK_SPACE);
 
     if(BotCanWin)
     {
         Format(text, sizeof(text), "%t", "JoinPanel: Bots can win the game is ENABLED!!");
-        DrawPanelText(faluco, text);
+        faluco.DrawText(text);
         Count++;
     }
 
     if(TurboMode)
     {
         Format(text, sizeof(text), "%t", "JoinPanel: Turbo Mode is ENABLED!!");
-        DrawPanelText(faluco, text);
+        faluco.DrawText(text);
         Count++;
     }
 
     if(KnifePro)
     {
         Format(text, sizeof(text), "%t", "JoinPanel: Knife Pro is ENABLED!!");
-        DrawPanelText(faluco, text);
+        faluco.DrawText(text);
         Count++;
     }
 
     if(KnifeElite)
     {
         Format(text, sizeof(text), "%t", "JoinPanel: Knife Elite is ENABLED!!");
-        DrawPanelText(faluco, text);
+        faluco.DrawText(text);
         Count++;
     }
 
     if(MinKillsPerLevel > 1)
     {
         Format(text, sizeof(text), "%t", "JoinPanel: Multikill Mode is ENABLED!!");
-        DrawPanelText(faluco, text);
+        faluco.DrawText(text);
         Count++;
     }
 
     if(Count)
     {
-        DrawPanelText(faluco, BLANK_SPACE);
+        faluco.DrawText(BLANK_SPACE);
     }
 
     Format(text, sizeof(text), "%t", "JoinPanel: Type !rules for instructions on how to play");
-    DrawPanelText(faluco, text);
+    faluco.DrawText(text);
     Format(text, sizeof(text), "%t", "JoinPanel: Type !level to get your level info and who is leading");
-    DrawPanelText(faluco, text);
+    faluco.DrawText(text);
     Format(text, sizeof(text), "%t", "JoinPanel: Type !score to get a list of all players scores and winnings");
-    DrawPanelText(faluco, text);
+    faluco.DrawText(text);
     Format(text, sizeof(text), "%t", "JoinPanel: Type !commands to get a full list of gungame commands");
-    DrawPanelText(faluco, text);
+    faluco.DrawText(text);
 
-    DrawPanelText(faluco, BLANK_SPACE);
+    faluco.DrawText(BLANK_SPACE);
     Format(text, sizeof(text), "%t", "Panel: Exit");
-    DrawPanelItem(faluco, text, ITEMDRAW_CONTROL);
-    
-    SendPanelToClient(faluco, client, EmptyPanelHandler, GUNGAME_MENU_TIME);
-    CloseHandle(faluco);
+    faluco.DrawItem(text, ITEMDRAW_CONTROL);
+
+    faluco.Send(client, EmptyPanelHandler, GUNGAME_MENU_TIME);
+    delete faluco;
 }
 
-ShowCommandPanel(client)
+void ShowCommandPanel(int client)
 {
     SetGlobalTransTarget(client);
-    decl String:text[256];
-    new Handle:Ham = CreatePanel();
+    char text[256];
+    Panel Ham = new Panel();
     Format(text, sizeof(text), "%t", "CommandPanel: [GunGame] Command list information");
-    SetPanelTitle(Ham, text);
-    DrawPanelText(Ham, BLANK_SPACE);
+    Ham.SetTitle(text);
+    Ham.DrawText(BLANK_SPACE);
     Format(text, sizeof(text), "%t", "CommandPanel: !level to see your current level and who is winning");
-    DrawPanelItem(Ham, text);
+    Ham.DrawItem(text);
     Format(text, sizeof(text), "%t", "CommandPanel: !weapons to see the weapon order");
-    DrawPanelItem(Ham, text);
+    Ham.DrawItem(text);
     Format(text, sizeof(text), "%t", "CommandPanel: !score to see all player current scores");
-    DrawPanelItem(Ham, text);
+    Ham.DrawItem(text);
     Format(text, sizeof(text), "%t", "CommandPanel: !top to see the top winners on the server");
-    DrawPanelItem(Ham, text);
+    Ham.DrawItem(text);
     Format(text, sizeof(text), "%t", "CommandPanel: !leader to see current leaders");
-    DrawPanelItem(Ham, text);
+    Ham.DrawItem(text);
     Format(text, sizeof(text), "%t", "CommandPanel: !rank to see your place in stats");
-    DrawPanelItem(Ham, text);
+    Ham.DrawItem(text);
     Format(text, sizeof(text), "%t", "CommandPanel: !rules to see the rules and how to play");
-    DrawPanelItem(Ham, text);
-    DrawPanelItem(Ham, BLANK, ITEMDRAW_SPACER);
+    Ham.DrawItem(text);
+    Ham.DrawItem(BLANK, ITEMDRAW_SPACER);
 
-    SetPanelCurrentKey(Ham, 9);
+    Ham.CurrentKey = 9;
     Format(text, sizeof(text), "%t", "Panel: Exit");
-    DrawPanelItem(Ham, text);
+    Ham.DrawItem(text);
 
-    SendPanelToClient(Ham, client, CommandPanelHandler, GUNGAME_MENU_TIME);
-    CloseHandle(Ham);
+    Ham.Send(client, CommandPanelHandler, GUNGAME_MENU_TIME);
+    delete Ham;
 }
 
-ShowWeaponLevelPanel(client)
+void ShowWeaponLevelPanel(int client)
 {
     ClientOnPage[client] = 0;
     DisplayWeaponLevelPanel(client);
 }
 
-DisplayWeaponLevelPanel(client)
+void DisplayWeaponLevelPanel(int client)
 {
     SetGlobalTransTarget(client);
-    decl String:text[256];
-    new Handle:Ham = CreatePanel();
+    char text[256];
+    Panel Ham = new Panel();
 
     Format(text, sizeof(text), "%t", "WeaponLevelPanel: [GunGame] Weapon Levels");
-    SetPanelTitle(Ham, text);
-    DrawPanelText(Ham, BLANK_SPACE);
+    Ham.SetTitle(text);
+    Ham.DrawText(BLANK_SPACE);
 
-    for ( new i = ClientOnPage[client] * 7, end = i + 7; i < end; i++ )
+    for ( int i = ClientOnPage[client] * 7, end = i + 7; i < end; i++ )
     {
         if ( i < WeaponOrderCount )
         {
             Format(text, sizeof(text), "%t", "WeaponLevelPanel: Order Weapon Kills", i + 1, WeaponOrderName[i], UTIL_GetCustomKillPerLevel(i));
-            DrawPanelText(Ham, text);
+            Ham.DrawText(text);
         }
     }
 
-    DrawPanelText(Ham, BLANK_SPACE);
-    SetPanelCurrentKey(Ham, 7);
+    Ham.DrawText(BLANK_SPACE);
+    Ham.CurrentKey = 7;
 
     Format(text, sizeof(text), "%t", "Panel: Back");
-    DrawPanelItem(Ham, text, ITEMDRAW_CONTROL);
+    Ham.DrawItem(text, ITEMDRAW_CONTROL);
     Format(text, sizeof(text), "%t", "Panel: Next");
-    DrawPanelItem(Ham, text, ITEMDRAW_CONTROL);
+    Ham.DrawItem(text, ITEMDRAW_CONTROL);
     Format(text, sizeof(text), "%t", "Panel: Exit");
-    DrawPanelItem(Ham, text, ITEMDRAW_CONTROL);
+    Ham.DrawItem(text, ITEMDRAW_CONTROL);
 
-    SendPanelToClient(Ham, client, WeaponMenuHandler, GUNGAME_MENU_TIME);
-    CloseHandle(Ham);
+    Ham.Send(client, WeaponMenuHandler, GUNGAME_MENU_TIME);
+    delete Ham;
 }
 
-public WeaponMenuHandler(Handle:menu, MenuAction:action, param1, param2)
+public int WeaponMenuHandler(Menu menu, MenuAction action, int param1, int param2)
 {
     if(action == MenuAction_Select)
     {
@@ -422,15 +427,16 @@ public WeaponMenuHandler(Handle:menu, MenuAction:action, param1, param2)
             }
         }
     }
+    return 0;
 }
 
-ShowRulesMenu(client)
+void ShowRulesMenu(int client)
 {
     ClientOnPage[client] = 0;
     DisplayRulesMenu(client);
 }
 
-public RulesMenuHandler(Handle:menu, MenuAction:action, param1, param2)
+public int RulesMenuHandler(Menu menu, MenuAction action, int param1, int param2)
 {
     if(action == MenuAction_Select)
     {
@@ -448,20 +454,21 @@ public RulesMenuHandler(Handle:menu, MenuAction:action, param1, param2)
             }
         }
     }
+    return 0;
 }
 
-DisplayRulesMenu(client)
+void DisplayRulesMenu(int client)
 {
     SetGlobalTransTarget(client);
-    decl String:text[256];
-    decl String:subtext[64];
-    
-    new Handle:menu = CreatePanel();
-    Format(text, sizeof(text), "%t", "RulesPanel: [GunGame] Rules information");
-    SetPanelTitle(menu, text);
-    DrawPanelText(menu, BLANK_SPACE);
+    char text[256];
+    char subtext[64];
 
-    new itemsCount = 4;
+    Panel menu = new Panel();
+    Format(text, sizeof(text), "%t", "RulesPanel: [GunGame] Rules information");
+    menu.SetTitle(text);
+    menu.DrawText(BLANK_SPACE);
+
+    int itemsCount = 4;
     if ( ObjectiveBonus )       itemsCount++;
     if ( AutoFriendlyFire )     itemsCount++;
     if ( MaxLevelPerRound > 1 ) itemsCount++;
@@ -469,30 +476,30 @@ DisplayRulesMenu(client)
     if ( KnifeElite )           itemsCount++;
     if ( TurboMode )            itemsCount++;
     if ( CommitSuicide )        itemsCount++;
-    
-    new itemsOnPage = 3;
-    new pagesCount  = (itemsCount - 1)/itemsOnPage + 1;
-    
+
+    int itemsOnPage = 3;
+    int pagesCount  = (itemsCount - 1)/itemsOnPage + 1;
+
     if ( ClientOnPage[client] < 0 )             ClientOnPage[client] = pagesCount - 1;
     if ( ClientOnPage[client] >= pagesCount )   ClientOnPage[client] = 0;
-    new itemStart   = ClientOnPage[client] * itemsOnPage + 1;
-    new itemEnd     = itemStart + itemsOnPage - 1;
-        
+    int itemStart   = ClientOnPage[client] * itemsOnPage + 1;
+    int itemEnd     = itemStart + itemsOnPage - 1;
+
     Format(text, sizeof(text), "%t", "RulesPanel: Page", ClientOnPage[client] + 1, pagesCount);
-    DrawPanelText(menu, text);
-    DrawPanelText(menu, BLANK_SPACE);
-    
-    new item = 0;
+    menu.DrawText(text);
+    menu.DrawText(BLANK_SPACE);
+
+    int item = 0;
     if ( (++item >= itemStart) && (itemEnd <= itemEnd) ) {
         FormatLanguageNumberTextEx(client, subtext, sizeof(subtext), MinKillsPerLevel, "points");
         CRemoveTags(subtext, sizeof(subtext));
         Format(text, sizeof(text), "%t", "RulesPanel: You must get kills with your current weapon to level up", subtext);
-        DrawPanelText(menu, text);
+        menu.DrawText(text);
     }
-            
+
     if ( (++item >= itemStart) && (itemEnd <= itemEnd) ) {
         Format(text, sizeof(text), "%t", "RulesPanel: If you get a kill with a weapon out of order. It does not count towards your level");
-        DrawPanelText(menu, text);
+        menu.DrawText(text);
     }
 
     /**
@@ -509,63 +516,62 @@ DisplayRulesMenu(client)
         } else {
             Format(text, sizeof(text), "%t", "RulesPanel: You can gain level by PLANTING or DEFUSING the bomb", subtext);
         }
-        DrawPanelText(menu, text);
+        menu.DrawText(text);
     }
 
     if ( AutoFriendlyFire && (++item >= itemStart) && (item <= itemEnd) ) {
         Format(text, sizeof(text), "%t", "RulesPanel: Friendly Fire is automatically turned ON when someone reaches GRENADE level");
-        DrawPanelText(menu, text);
+        menu.DrawText(text);
     }
-    
+
     if ( (MaxLevelPerRound > 1) && (++item >= itemStart) && (item <= itemEnd) ) {
         Format(text, sizeof(text), "%t", "RulesPanel: You CAN gained more than one level per round");
-        DrawPanelText(menu, text);
+        menu.DrawText(text);
     }
 
     if ( KnifePro && (++item >= itemStart) && (item <= itemEnd) ) {
         Format(text, sizeof(text), "%t", "RulesPanel: You can steal a level from an opponent by knifing them");
-        DrawPanelText(menu, text);
+        menu.DrawText(text);
     }
 
     if ( KnifeElite && (++item >= itemStart) && (item <= itemEnd) ) {
         Format(text, sizeof(text), "%t", "RulesPanel: After you levelup, you will only have a knife until the next round starts");
-        DrawPanelText(menu, text);
+        menu.DrawText(text);
     }
 
     if ( TurboMode && (++item >= itemStart) && (item <= itemEnd) ) {
         Format(text, sizeof(text), "%t", "RulesPanel: You will receive your next weapon immediately when you level up");
-        DrawPanelText(menu, text);
+        menu.DrawText(text);
     }
-    
+
     if ( CommitSuicide && (++item >= itemStart) && (item <= itemEnd) ) {
-        
+
         FormatLanguageNumberTextEx(client, subtext, sizeof(subtext), CommitSuicide, "levels");
         CRemoveTags(subtext, sizeof(subtext));
         Format(text, sizeof(text), "%t", "RulesPanel: If you commit suicide you will lose levels", subtext);
-        DrawPanelText(menu, text);
+        menu.DrawText(text);
     }
 
     if ( (++item >= itemStart) && (item <= itemEnd) ) {
         Format(text, sizeof(text), "%t", "RulesPanel: There is a grace period at the end of each round to allow players to switch teams");
-        DrawPanelText(menu, text);
+        menu.DrawText(text);
     }
 
     if ( (++item >= itemStart) && (item <= itemEnd) ) {
         Format(text, sizeof(text), "%t", "RulesPanel: Type !commands to see the list of gungame commands");
-        DrawPanelText(menu, text);
+        menu.DrawText(text);
     }
-    
-    DrawPanelText(menu, BLANK_SPACE);
-    SetPanelCurrentKey(menu, 7);
+
+    menu.DrawText(BLANK_SPACE);
+    menu.CurrentKey = 7;
 
     Format(text, sizeof(text), "%t", "Panel: Back");
-    DrawPanelItem(menu, text, ITEMDRAW_CONTROL);
+    menu.DrawItem(text, ITEMDRAW_CONTROL);
     Format(text, sizeof(text), "%t", "Panel: Next");
-    DrawPanelItem(menu, text, ITEMDRAW_CONTROL);
+    menu.DrawItem(text, ITEMDRAW_CONTROL);
     Format(text, sizeof(text), "%t", "Panel: Exit");
-    DrawPanelItem(menu, text, ITEMDRAW_CONTROL);
+    menu.DrawItem(text, ITEMDRAW_CONTROL);
 
-    SendPanelToClient(menu, client, RulesMenuHandler, GUNGAME_MENU_TIME);
-    CloseHandle(menu);
+    menu.Send(client, RulesMenuHandler, GUNGAME_MENU_TIME);
+    delete menu;
 }
-

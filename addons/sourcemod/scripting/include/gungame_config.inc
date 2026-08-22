@@ -9,7 +9,7 @@
  * @param NewSection        The news section of the config file.
  * @noreturn
  */
-forward GG_ConfigNewSection(const String:name[]);
+forward void GG_ConfigNewSection(const char[] name);
 
 /**
  * Called when the leader change player.
@@ -18,7 +18,7 @@ forward GG_ConfigNewSection(const String:name[]);
  * @param Value     Value of setting
  * @noreturn
  */
-forward GG_ConfigKeyValue(const String:key[], const String:value[]);
+forward void GG_ConfigKeyValue(const char[] key, const char[] value);
 
 /**
  * Called when a file is fully parsed.
@@ -26,7 +26,7 @@ forward GG_ConfigKeyValue(const String:key[], const String:value[]);
  * @noparam
  * @noreturn
  */
-forward GG_ConfigParseEnd();
+forward void GG_ConfigParseEnd();
 
 /**
  * Called when all the config file are fully parsed.
@@ -34,7 +34,7 @@ forward GG_ConfigParseEnd();
  * @noparam
  * @noreturn
  */
-forward GG_ConfigEnd();
+forward void GG_ConfigEnd();
 
 /**
  * Get cfg dir name;
@@ -43,7 +43,7 @@ forward GG_ConfigEnd();
  * @param dirNameSize    Dir name string size.
  * @return          void.
  */
-native GG_ConfigGetDir(String:dirName[], dirNameSize);
+native void GG_ConfigGetDir(char[] dirName, int dirNameSize);
 
 /* Do not edit the code below. */
 public SharedPlugin:__pl_gungame_cfg =

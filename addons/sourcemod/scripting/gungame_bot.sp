@@ -6,13 +6,15 @@
 #include <gungame_config>
 #include <colors>
 
-new State:ConfigState;
-new bool:g_Cfg_AllowUpByKnifeBot;
-new bool:g_Cfg_AllowUpByExplodeBot;
-new bool:g_Cfg_AllowUpByKnifeBotNoH;
-new bool:g_Cfg_AllowUpByExplodeBotNoH;
+#pragma newdecls required
 
-public Plugin:myinfo =
+State ConfigState;
+bool g_Cfg_AllowUpByKnifeBot;
+bool g_Cfg_AllowUpByExplodeBot;
+bool g_Cfg_AllowUpByKnifeBotNoH;
+bool g_Cfg_AllowUpByExplodeBotNoH;
+
+public Plugin myinfo =
 {
     name = "GunGame:SM Bot Protection",
     author = GUNGAME_AUTHOR,
@@ -21,12 +23,12 @@ public Plugin:myinfo =
     url = GUNGAME_URL
 };
 
-public OnPluginStart()
+public void OnPluginStart()
 {
     LoadTranslations("gungame_bot");
 }
 
-public Action:GG_OnClientDeath(Killer, Victim, WeaponId, bool:TeamKilled)
+public Action GG_OnClientDeath(int Killer, int Victim, int WeaponId, bool TeamKilled)
 {
     if ( TeamKilled || !IsFakeClient(Victim) || IsFakeClient(Killer) ) {
         return Plugin_Continue;
@@ -69,7 +71,7 @@ public Action:GG_OnClientDeath(Killer, Victim, WeaponId, bool:TeamKilled)
     return Plugin_Continue;
 }
 
-public GG_ConfigNewSection(const String:name[])
+public void GG_ConfigNewSection(const char[] name)
 {
     if ( strcmp("Config", name, false) == 0 )
     {
@@ -77,32 +79,32 @@ public GG_ConfigNewSection(const String:name[])
     }
 }
 
-public GG_ConfigKeyValue(const String:key[], const String:value[])
+public void GG_ConfigKeyValue(const char[] key, const char[] value)
 {
     if ( ConfigState == CONFIG_STATE_CONFIG )
     {
         if ( strcmp("AllowLevelUpByKnifeBot", key, false) == 0 ) {
-            g_Cfg_AllowUpByKnifeBot = bool:StringToInt(value);
+            g_Cfg_AllowUpByKnifeBot = view_as<bool>(StringToInt(value));
         } else if ( strcmp("AllowLevelUpByExplodeBot", key, false) == 0 ) {
-            g_Cfg_AllowUpByExplodeBot = bool:StringToInt(value);
+            g_Cfg_AllowUpByExplodeBot = view_as<bool>(StringToInt(value));
         } else if ( strcmp("AllowLevelUpByKnifeBotIfNoHuman", key, false) == 0 ) {
-            g_Cfg_AllowUpByKnifeBotNoH = bool:StringToInt(value);
+            g_Cfg_AllowUpByKnifeBotNoH = view_as<bool>(StringToInt(value));
         } else if ( strcmp("AllowLevelUpByExplodeBotIfNoHuman", key, false) == 0 ) {
-            g_Cfg_AllowUpByExplodeBotNoH = bool:StringToInt(value);
+            g_Cfg_AllowUpByExplodeBotNoH = view_as<bool>(StringToInt(value));
         }
 
     }
 }
 
-public GG_ConfigParseEnd()
+public void GG_ConfigParseEnd()
 {
     ConfigState = CONFIG_STATE_NONE;
 }
 
-bool:IsThereAnyHuman() {
-    new humans = 0;
-    new team;
-    for (new i = 1; i < MaxClients; i++) {
+bool IsThereAnyHuman() {
+    int humans = 0;
+    int team;
+    for (int i = 1; i < MaxClients; i++) {
         if ( IsClientInGame(i) && !IsFakeClient(i) ) {
             team = GetClientTeam(i);
             if ( team == TEAM_T || team == TEAM_CT ) {

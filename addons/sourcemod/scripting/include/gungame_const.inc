@@ -29,7 +29,7 @@
  * Maximum level in gungame.
  */
 #define GUNGAME_MAX_LEVEL   64
-                                        
+
 /**
  * This is the maximum allow time for a menu to be !rules, !weapons, !score, !level is display for.
  */
@@ -40,11 +40,11 @@
  */
 #define GUNGAME_ADMINFLAG         ADMFLAG_RCON
 
-stock const String:GUNGAME_AUTHOR[] = "teame06-hat (http://www.hat-city.net), Liam, Otstrel.ru Team (http://otstrel.ru)";
-stock const String:GUNGAME_URL[] = "https://forums.alliedmods.net/showthread.php?t=93977";
-stock const String:GUNGAME_VERSION[] = "1.2.16.0";
-stock const String:BLANK[] = "";
-stock const String:BLANK_SPACE[] = " ";
+stock const char GUNGAME_AUTHOR[] = "teame06-hat (http://www.hat-city.net), Liam, Otstrel.ru Team (http://otstrel.ru)";
+stock const char GUNGAME_URL[] = "https://forums.alliedmods.net/showthread.php?t=93977";
+stock const char GUNGAME_VERSION[] = "1.2.16.0";
+stock const char BLANK[] = "";
+stock const char BLANK_SPACE[] = " ";
 
 #define MAX_NAME_SIZE        64
 #define MAX_CHAT_SIZE        192
@@ -83,7 +83,7 @@ stock const String:BLANK_SPACE[] = " ";
 
 // AfkAction
 #define AFK_KICK             1
-#define AFK_SPECTATE         2                                                                        
+#define AFK_SPECTATE         2
 
 #define PRINT_NOTIFY         1
 #define PRINT_CONSOLE        2
@@ -113,7 +113,7 @@ enum State
     CONFIG_STATE_KILLS,
     CONFIG_STATE_SOUNDS,
     CONFIG_STATE_SECONDARY_LIST
-}
+};
 
 #define MULTI_LEVEL_EFFECT2      "effects/combinemuzzle2.vmt"
 #define MULTI_LEVEL_EFFECT1      "effects/combinemuzzle1.vmt"

@@ -1,11 +1,11 @@
 // Offset
-new OffsetMoney;
-new OffsetArmor;
-new OffsetHelm;
-new OffsetDefuser;
-new OffsetMovement;
-new OffsetHostage;
-new m_hMyWeapons;
-new OffsetWeaponParent;
-new g_iOffs_iPrimaryAmmoType = INVALID_OFFSET;
-new g_iOffsetAmmo;
+int OffsetMoney;
+int OffsetArmor;
+int OffsetHelm;
+int OffsetDefuser;
+int OffsetMovement;
+int OffsetHostage;
+int m_hMyWeapons;
+int OffsetWeaponParent;
+int g_iOffs_iPrimaryAmmoType = INVALID_OFFSET;
+int g_iOffsetAmmo;

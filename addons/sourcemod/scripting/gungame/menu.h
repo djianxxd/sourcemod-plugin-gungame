@@ -1,3 +1,3 @@
 /* Menus */
-new ClientOnPage[MAXPLAYERS + 1];
-new WeaponLevelPages;
+int ClientOnPage[MAXPLAYERS + 1];
+int WeaponLevelPages;

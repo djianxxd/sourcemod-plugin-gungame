@@ -1,60 +1,45 @@
-@echo off 
+@echo off
+rem ============================================================
+rem  GunGame build script (SourceMod 1.12)
+rem  Compiles all plugins from this directory into ..\plugins\
+rem ============================================================
 
-set DIR_SERVER_SOURCEMOD=d:\games\csgo_gungame_ds\csgo\addons\sourcemod
-set DIR_SERVER_SCRIPTING=%DIR_SERVER_SOURCEMOD%\scripting
-set DIR_SERVER_PLUGINS=%DIR_SERVER_SOURCEMOD%\plugins
+set SPCOMP=D:\sourcemod-1.12.0-git7246-windows\addons\sourcemod\scripting\spcomp.exe
+set DIR_SCRIPTING=%~dp0
+set DIR_PLUGINS=%DIR_SCRIPTING%..\plugins
+set LOG_COMPILE=%DIR_SCRIPTING%\compile_gungame.log
 
-set DIR_SOURCES_SOURCEMOD=C:\projects\sourcemod-plugin-gungame\addons\sourcemod
-set DIR_SOURCES_SCRIPTING=%DIR_SOURCES_SOURCEMOD%\scripting
-set DIR_SOURCES_PLUGINS=%DIR_SOURCES_SOURCEMOD%\plugins
+cd /d %DIR_SCRIPTING%
 
-set LOG_COMPILE=%DIR_SOURCES_SCRIPTING%\compile_gungame.log
+echo %DATE% %TIME% > "%LOG_COMPILE%"
 
-xcopy /e /f /y %DIR_SOURCES_SCRIPTING%\*.* %DIR_SERVER_SCRIPTING%\
+for %%P in (
+    gungame_afk.sp
+    gungame_bot.sp
+    gungame_config.sp
+    gungame_display_winner.sp
+    gungame_logging.sp
+    gungame_mapvoting.sp
+    gungame_stats.sp
+    gungame_tk.sp
+    gungame_warmup_configs.sp
+    gungame_winner_effects.sp
+) do (
+    echo [compile] %%P
+    "%SPCOMP%" "%%P" -i"%DIR_SCRIPTING%include" -o"%DIR_PLUGINS%\%%~nP.smx" >> "%LOG_COMPILE%" 2>&1 || goto :fail
+)
 
-cd /d %DIR_SERVER_SCRIPTING%
+echo [compile] gungame.sp
+"%SPCOMP%" "gungame.sp" -i"%DIR_SCRIPTING%include" -o"%DIR_PLUGINS%\gungame.smx" >> "%LOG_COMPILE%" 2>&1 || goto :fail
 
-echo %DATE% %TIME% > %LOG_COMPILE%
+echo [compile] gungame.sp WITH_SDKHOOKS=1
+"%SPCOMP%" "gungame.sp" -i"%DIR_SCRIPTING%include" -o"%DIR_PLUGINS%\gungame_sdkhooks.smx" WITH_SDKHOOKS=1 >> "%LOG_COMPILE%" 2>&1 || goto :fail
 
-%DIR_SERVER_SCRIPTING%\spcomp gungame.sp WITH_SDKHOOKS=1 >> %LOG_COMPILE%
-::%DIR_SERVER_SCRIPTING%\spcomp gungame.sp WITH_SDKHOOKS=1 GUNGAME_DEBUG=1 >> %LOG_COMPILE%
-copy %DIR_SERVER_SCRIPTING%\gungame.smx                     %DIR_SOURCES_PLUGINS%\disabled\gungame_sdkhooks.smx
-copy %DIR_SERVER_SCRIPTING%\gungame.smx                     %DIR_SERVER_PLUGINS%\gungame_sdkhooks.smx
+echo.
+echo Done. Output in %DIR_PLUGINS%
+exit /b 0
 
-%DIR_SERVER_SCRIPTING%\spcomp gungame.sp                    >> %LOG_COMPILE%
-%DIR_SERVER_SCRIPTING%\spcomp gungame_afk.sp                >> %LOG_COMPILE%
-%DIR_SERVER_SCRIPTING%\spcomp gungame_config.sp             >> %LOG_COMPILE%
-%DIR_SERVER_SCRIPTING%\spcomp gungame_display_winner.sp     >> %LOG_COMPILE%
-%DIR_SERVER_SCRIPTING%\spcomp gungame_logging.sp            >> %LOG_COMPILE%
-%DIR_SERVER_SCRIPTING%\spcomp gungame_mapvoting.sp          >> %LOG_COMPILE%
-%DIR_SERVER_SCRIPTING%\spcomp gungame_stats.sp              >> %LOG_COMPILE%
-%DIR_SERVER_SCRIPTING%\spcomp gungame_tk.sp                 >> %LOG_COMPILE%
-%DIR_SERVER_SCRIPTING%\spcomp gungame_bot.sp                >> %LOG_COMPILE%
-%DIR_SERVER_SCRIPTING%\spcomp gungame_warmup_configs.sp     >> %LOG_COMPILE%
-%DIR_SERVER_SCRIPTING%\spcomp gungame_winner_effects.sp     >> %LOG_COMPILE%
-
-copy %DIR_SERVER_SCRIPTING%\gungame.smx                     %DIR_SOURCES_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_afk.smx                 %DIR_SOURCES_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_config.smx              %DIR_SOURCES_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_display_winner.smx      %DIR_SOURCES_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_logging.smx             %DIR_SOURCES_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_mapvoting.smx           %DIR_SOURCES_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_stats.smx               %DIR_SOURCES_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_tk.smx                  %DIR_SOURCES_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_bot.smx                 %DIR_SOURCES_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_warmup_configs.smx      %DIR_SOURCES_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_winner_effects.smx      %DIR_SOURCES_PLUGINS%\
-
-copy %DIR_SERVER_SCRIPTING%\gungame.smx                     %DIR_SERVER_PLUGINS%\disabled\
-copy %DIR_SERVER_SCRIPTING%\gungame_afk.smx                 %DIR_SERVER_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_config.smx              %DIR_SERVER_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_display_winner.smx      %DIR_SERVER_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_logging.smx             %DIR_SERVER_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_mapvoting.smx           %DIR_SERVER_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_stats.smx               %DIR_SERVER_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_tk.smx                  %DIR_SERVER_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_bot.smx                 %DIR_SERVER_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_warmup_configs.smx      %DIR_SERVER_PLUGINS%\
-copy %DIR_SERVER_SCRIPTING%\gungame_winner_effects.smx      %DIR_SERVER_PLUGINS%\
-
-cd /d %DIR_SOURCES_SCRIPTING%
+:fail
+echo.
+echo COMPILE FAILED - see %LOG_COMPILE%
+exit /b 1

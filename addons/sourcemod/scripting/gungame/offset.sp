@@ -1,40 +1,40 @@
-OnOffsetStart()
+void OnOffsetStart()
 {
-    decl String:Error[64];
-    
+    char Error[64];
+
     g_iOffsetAmmo = FindSendPropInfo("CBasePlayer", "m_iAmmo");
     if (g_iOffsetAmmo == INVALID_OFFSET) {
         SetFailState("FATAL ERROR: Offset \"CBasePlayer::m_iAmmo\" was not found.");
     }
 
-    OffsetMovement = FindSendPropOffs("CBasePlayer", "m_flLaggedMovementValue");
+    OffsetMovement = FindSendPropInfo("CBasePlayer", "m_flLaggedMovementValue");
     if(OffsetMovement == INVALID_OFFSET)
     {
         FormatEx(Error, sizeof(Error), "FATAL ERROR OffsetMovement [%d]. Please contact the author.", OffsetMovement);
         SetFailState(Error);
     }
 
-    m_hMyWeapons = FindSendPropOffs("CBasePlayer", "m_hMyWeapons");
+    m_hMyWeapons = FindSendPropInfo("CBasePlayer", "m_hMyWeapons");
     if(m_hMyWeapons == INVALID_OFFSET)
     {
         FormatEx(Error, sizeof(Error), "FATAL ERROR m_hMyWeapons [%d]. Please contact the author.", m_hMyWeapons);
         SetFailState(Error);
     }
 
-    OffsetWeaponParent = FindSendPropOffs("CBaseCombatWeapon", "m_hOwnerEntity");
+    OffsetWeaponParent = FindSendPropInfo("CBaseCombatWeapon", "m_hOwnerEntity");
     if ( OffsetWeaponParent == INVALID_OFFSET )
     {
         FormatEx(Error, sizeof(Error), "FATAL ERROR OffsetWeaponParent [%d]. Please contact the author.", OffsetWeaponParent);
         SetFailState(Error);
     }
-    
+
     g_iOffs_iPrimaryAmmoType = FindSendPropInfo("CBaseCombatWeapon","m_iPrimaryAmmoType");
     if ( g_iOffs_iPrimaryAmmoType == INVALID_OFFSET )
     {
         FormatEx(Error, sizeof(Error), "FATAL ERROR g_iOffs_iPrimaryAmmoType [%d]. Please contact the author.", g_iOffs_iPrimaryAmmoType);
         SetFailState(Error);
     }
-    
+
     FindCstrikeOffset();
 
     /**
@@ -45,11 +45,11 @@ OnOffsetStart()
      */
 }
 
-FindCstrikeOffset()
+void FindCstrikeOffset()
 {
-    decl String:Error[64];
+    char Error[64];
 
-    OffsetHostage = FindSendPropOffs("CCSPlayerResource", "m_iHostageEntityIDs");
+    OffsetHostage = FindSendPropInfo("CCSPlayerResource", "m_iHostageEntityIDs");
 
     if(OffsetHostage == INVALID_OFFSET)
     {
@@ -57,9 +57,9 @@ FindCstrikeOffset()
         SetFailState(Error);
     }
 
-    new String:CCSPlayer[] = "CCSPlayer";
+    char CCSPlayer[] = "CCSPlayer";
     //Offsets
-    OffsetMoney = FindSendPropOffs(CCSPlayer, "m_iAccount");
+    OffsetMoney = FindSendPropInfo(CCSPlayer, "m_iAccount");
 
     if(OffsetMoney == INVALID_OFFSET)
     {
@@ -67,7 +67,7 @@ FindCstrikeOffset()
         SetFailState(Error);
     }
 
-    OffsetArmor = FindSendPropOffs(CCSPlayer, "m_ArmorValue");
+    OffsetArmor = FindSendPropInfo(CCSPlayer, "m_ArmorValue");
 
     if(OffsetArmor == INVALID_OFFSET)
     {
@@ -75,7 +75,7 @@ FindCstrikeOffset()
         SetFailState(Error);
     }
 
-    OffsetHelm = FindSendPropOffs(CCSPlayer, "m_bHasHelmet");
+    OffsetHelm = FindSendPropInfo(CCSPlayer, "m_bHasHelmet");
 
     if(OffsetHelm == INVALID_OFFSET)
     {
@@ -83,7 +83,7 @@ FindCstrikeOffset()
         SetFailState(Error);
     }
 
-    OffsetDefuser = FindSendPropOffs(CCSPlayer, "m_bHasDefuser");
+    OffsetDefuser = FindSendPropInfo(CCSPlayer, "m_bHasDefuser");
 
     if(OffsetDefuser == INVALID_OFFSET)
     {

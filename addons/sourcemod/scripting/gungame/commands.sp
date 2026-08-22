@@ -1,4 +1,4 @@
-OnCreateCommand()
+void OnCreateCommand()
 {
     // ConsoleCmd
     RegConsoleCmd("level", _CmdLevel);
@@ -19,47 +19,47 @@ OnCreateCommand()
      */
 }
 
-public Action:_CmdEnable(client, args)
+public Action _CmdEnable(int client, int args)
 {
     if(!IsActive)
     {
         ReplyToCommand(client, "[GunGame] Turning on GunGame:SM");
         CPrintToChatAll("%t", "GunGame has been enabled");
 
-        SetConVarInt(gungame_enabled, 1);
+        gungame_enabled.IntValue = 1;
 
         Call_StartForward(FwdStart);
         Call_PushCell(true);
         Call_Finish();
 
-        SetConVarInt(mp_restartgame, 1);
+        mp_restartgame.IntValue = 1;
     } else {
         ReplyToCommand(client, "[GunGame] is already enabled");
     }
     return Plugin_Handled;
 }
 
-public Action:_CmdDisable(client, args)
+public Action _CmdDisable(int client, int args)
 {
     if(IsActive)
     {
         ReplyToCommand(client, "[GunGame] Turning off GunGame:SM");
         CPrintToChatAll("%t", "GunGame has been disabled");
 
-        SetConVarInt(gungame_enabled, 0);
+        gungame_enabled.IntValue = 0;
 
         Call_StartForward(FwdShutdown);
         Call_PushCell(true);
         Call_Finish();
 
-        SetConVarInt(mp_restartgame, 1);
+        mp_restartgame.IntValue = 1;
     } else {
         ReplyToCommand(client, "[GunGame] is already disabled");
     }
     return Plugin_Handled;
 }
 
-public Action:_CmdLevel(client, args)
+public Action _CmdLevel(int client, int args)
 {
     if ( IsActive )
     {
@@ -68,7 +68,7 @@ public Action:_CmdLevel(client, args)
     return Plugin_Handled;
 }
 
-public Action:_CmdLeader(client, args)
+public Action _CmdLeader(int client, int args)
 {
     if ( IsActive )
     {
@@ -77,7 +77,7 @@ public Action:_CmdLeader(client, args)
     return Plugin_Handled;
 }
 
-public Action:_CmdRules(client, args)
+public Action _CmdRules(int client, int args)
 {
     if(IsActive)
     {
@@ -86,7 +86,7 @@ public Action:_CmdRules(client, args)
     return Plugin_Handled;
 }
 
-public Action:_CmdScore(client, args)
+public Action _CmdScore(int client, int args)
 {
     if(IsActive)
     {
@@ -95,7 +95,7 @@ public Action:_CmdScore(client, args)
     return Plugin_Handled;
 }
 
-public Action:_CmdWeapons(client, args)
+public Action _CmdWeapons(int client, int args)
 {
     if(IsActive)
     {
@@ -104,7 +104,7 @@ public Action:_CmdWeapons(client, args)
     return Plugin_Handled;
 }
 
-public Action:_CmdCommand(client, args)
+public Action _CmdCommand(int client, int args)
 {
     if(IsActive)
     {
@@ -113,7 +113,7 @@ public Action:_CmdCommand(client, args)
     return Plugin_Handled;
 }
 
-public Action:_CmdVersion(client, args)
+public Action _CmdVersion(int client, int args)
 {
     if(GetCmdReplySource() == SM_REPLY_TO_CHAT)
     {
@@ -127,24 +127,24 @@ public Action:_CmdVersion(client, args)
     return Plugin_Handled;
 }
 
-public Action:CmdReset(client, args)
+public Action CmdReset(int client, int args)
 {
     if(IsActive)
     {
         /* Reset the game and start over */
-        for(new i = 1; i <= MaxClients; i++)
+        for(int i = 1; i <= MaxClients; i++)
         {
             PlayerLevel[i] = 0;
             UTIL_UpdatePlayerScoreLevel(i);
         }
 
-        SetConVarInt(mp_restartgame, 1);
+        mp_restartgame.IntValue = 1;
     }
 
     return Plugin_Handled;
 }
 
-public Action:_CmdStatus(client, args)
+public Action _CmdStatus(int client, int args)
 {
     /**
      * Add a command called gg_status this will tell the state of the current game.

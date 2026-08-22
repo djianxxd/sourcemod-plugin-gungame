@@ -1,19 +1,19 @@
-OnCreateDebug() {
+void OnCreateDebug() {
     RegConsoleCmd("gungamesm_display", _CmdDisplay);
     RegConsoleCmd("gungamesm_set_level", _CmdSetLevel);
 }
 
-public Action:_CmdSetLevel(client, args) {
-    decl String:Arg[10];
+public Action _CmdSetLevel(int client, int args) {
+    char Arg[10];
     GetCmdArg(1, Arg, sizeof(Arg));
 
-    new oldLevel = PlayerLevel[client];
-    new setLevel = StringToInt(Arg)-1;
+    int oldLevel = PlayerLevel[client];
+    int setLevel = StringToInt(Arg)-1;
     if ( setLevel < 0 || setLevel >= WeaponOrderCount ) {
         setLevel = 0;
     }
-    new newLevel = UTIL_ChangeLevel(client, setLevel - oldLevel); // todo: need to test this
-    decl String:name[MAX_NAME_SIZE];
+    int newLevel = UTIL_ChangeLevel(client, setLevel - oldLevel); // todo: need to test this
+    char name[MAX_NAME_SIZE];
     if ( client && IsClientConnected(client) && IsClientInGame(client) ) {
         GetClientName(client, name, sizeof(name));
     } else {
@@ -21,13 +21,13 @@ public Action:_CmdSetLevel(client, args) {
     }
 
     PrintLeaderToChat(client, oldLevel, newLevel, name);
-    
+
     return Plugin_Handled;
 }
 
-public Action:_CmdDisplay(client, args) {
-    decl String:Args[64];
-    decl String:Args2[64];
+public Action _CmdDisplay(int client, int args) {
+    char Args[64];
+    char Args2[64];
     GetCmdArg(1, Args, sizeof(Args));
     GetCmdArg(2, Args2, sizeof(Args2));
 
@@ -43,11 +43,11 @@ public Action:_CmdDisplay(client, args) {
     return Plugin_Handled;
 }
 
-Debug_DisplayConfig(client) {
+void Debug_DisplayConfig(int client) {
     // todo
     PrintToConsole(client, "Not implemented yet");
 }
 
-Debug_DisplayGetWeaponIndex(client, const String:weaponName[]) {
+void Debug_DisplayGetWeaponIndex(int client, const char[] weaponName) {
     PrintToConsole(client, "Weapon index=%i for weapon name=%s", UTIL_GetWeaponIndex(weaponName), weaponName);
 }
