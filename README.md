@@ -50,3 +50,10 @@ Windows 一键编译：
 * 数据库键与统计查询中的 SteamID 统一由 `STEAM_1:` 规范化为 `STEAM_0:`。
 * `addons/sourcemod/plugins` 内含预编译 `.smx`；
   `gungame_sdkhooks.smx` 为启用 SDKHooks 的核心插件变体。
+
+## 部署注意
+
+`plugins` 目录中**只能保留一个核心插件**：`gungame.smx` 或
+`gungame_sdkhooks.smx`，二者同时存在会触发防冲突检查，
+两个插件都将拒绝加载（AskPluginLoad2 检测）。未选用的变体请放入
+`plugins/disabled/` 或删除。
